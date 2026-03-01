@@ -26,7 +26,7 @@
                 <!-- Logo -->
                 <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-[#0a3a6e]">
                     <div class="flex items-center gap-2">
-                        <img src="{{ asset('public/img/messiah logo.png') }}" alt="MMSC Logo" class="h-10 w-10 rounded-full object-cover">
+                        <img src="{{ asset('img/messiah-logo.png') }}" alt="MMSC Logo" class="h-10 w-10 rounded-full object-cover">
                         <div class="flex flex-col leading-tight">
                             <span id="logo-text" class="text-xl font-bold text-white tracking-tight font-poppins">MMSC</span>
                             <span id="logo-text" class="text-xs text-white/70 font-medium">Admin</span>
