@@ -26,10 +26,11 @@
                 <!-- Logo -->
                 <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-[#0a3a6e]">
                     <div class="flex items-center gap-2">
-                        <div class="h-6 w-6 rounded bg-white flex items-center justify-center text-blue-900">
-                            <iconify-icon icon="solar:infinity-linear" width="16"></iconify-icon>
+                        <img src="{{ asset('public/img/messiah logo.png') }}" alt="MMSC Logo" class="h-10 w-10 rounded-full object-cover">
+                        <div class="flex flex-col leading-tight">
+                            <span id="logo-text" class="text-xl font-bold text-white tracking-tight font-poppins">MMSC</span>
+                            <span id="logo-text" class="text-xs text-white/70 font-medium">Admin</span>
                         </div>
-                        <span id="logo-text" class="text-lg font-extrabold text-white tracking-tight font-poppins">MMSC</span>
                     </div>
                   
                 </div>
@@ -427,7 +428,408 @@
     </div>
 </div>
 
-<!-- Data Table -->
+<!-- Calendar Section -->
+<div class="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-card">
+
+    <!-- Calendar Header -->
+    <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-dark-border">
+        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Calendar</h3>
+    </div>
+
+    <!-- Calendar Controls -->
+    <div class="flex flex-col gap-4 px-6 pt-5 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <!-- Navigation Arrows -->
+        <div class="flex items-center gap-2">
+            <button onclick="calendarNav('prev-year')" class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 transition-colors">
+                <iconify-icon icon="solar:double-alt-arrow-left-linear" width="16"></iconify-icon>
+            </button>
+            <button onclick="calendarNav('prev-month')" class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 transition-colors">
+                <iconify-icon icon="solar:alt-arrow-left-linear" width="16"></iconify-icon>
+            </button>
+            <button onclick="calendarNav('next-month')" class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 transition-colors">
+                <iconify-icon icon="solar:alt-arrow-right-linear" width="16"></iconify-icon>
+            </button>
+            <button onclick="calendarNav('next-year')" class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 transition-colors">
+                <iconify-icon icon="solar:double-alt-arrow-right-linear" width="16"></iconify-icon>
+            </button>
+            <button onclick="calendarNav('today')" class="flex h-9 items-center px-4 rounded-full bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors">
+                Today
+            </button>
+        </div>
+
+        <!-- Month Title -->
+        <h2 id="calendar-title" class="text-lg font-bold text-slate-800 dark:text-white text-center"></h2>
+
+        <!-- View Toggle -->
+        <div class="flex items-center rounded-lg border border-slate-200 dark:border-dark-border overflow-hidden text-sm">
+            <button onclick="setView('month')" id="view-month" class="px-3 py-1.5 font-medium bg-violet-600 text-white transition-colors">Month</button>
+            <button onclick="setView('week')" id="view-week" class="px-3 py-1.5 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">Week</button>
+            <button onclick="setView('day')" id="view-day" class="px-3 py-1.5 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">Day</button>
+            <button onclick="setView('list')" id="view-list" class="px-3 py-1.5 font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">List</button>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="px-6 pb-6">
+        <!-- Day Labels -->
+        <div class="grid grid-cols-7 border-t border-l border-slate-200 dark:border-dark-border">
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Sun</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Mon</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Tue</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Wed</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Thu</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Fri</div>
+            <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Sat</div>
+        </div>
+        <!-- Day Cells -->
+        <div id="calendar-grid" class="grid grid-cols-7 border-l border-slate-200 dark:border-dark-border">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Event Modal -->
+<div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>
+    <!-- Modal -->
+    <div class="relative w-full max-w-2xl mx-4 rounded-2xl overflow-hidden shadow-2xl">
+        <!-- Purple Header -->
+        <div class="bg-violet-600 px-6 py-5 flex items-center justify-between">
+            <h3 id="modal-title" class="text-white text-lg font-bold"></h3>
+            <button onclick="closeModal()" class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 hover:bg-slate-100 transition-colors font-bold text-base">✕</button>
+        </div>
+        <!-- White Body -->
+        <div class="bg-white px-6 py-6">
+            <form id="event-form" onsubmit="saveEvent(event)">
+                <input type="hidden" id="event-date" name="event_date">
+                @csrf
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-5">
+                    <!-- Event Title -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold uppercase text-slate-500 tracking-wide">Event Title <span class="text-red-500">*</span></label>
+                        <input type="text" id="event-title" name="event_title" required
+                            class="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:border-dark-border dark:bg-dark-card dark:text-white">
+                    </div>
+                    <!-- Role -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold uppercase text-slate-500 tracking-wide">Role <span class="text-red-500">*</span></label>
+                        <select id="event-role" name="role" required
+                            class="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:border-dark-border dark:bg-dark-card dark:text-white">
+                            <option value="" disabled selected>Select</option>
+                            <option value="admin">Admin</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="student">Student</option>
+                            <option value="parent">Parent</option>
+                        </select>
+                    </div>
+                    <!-- Event Location -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold uppercase text-slate-500 tracking-wide">Event Location <span class="text-red-500">*</span></label>
+                        <input type="text" id="event-location" name="event_location" required
+                            class="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:border-dark-border dark:bg-dark-card dark:text-white">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 mb-6">
+                    <!-- Description -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold uppercase text-slate-500 tracking-wide">Description <span class="text-red-500">*</span></label>
+                        <textarea id="event-description" name="description" required rows="4"
+                            class="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:border-dark-border dark:bg-dark-card dark:text-white resize-none"></textarea>
+                    </div>
+                    <!-- URL -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold uppercase text-slate-500 tracking-wide">URL</label>
+                        <textarea id="event-url" name="url" rows="4"
+                            class="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:border-dark-border dark:bg-dark-card dark:text-white resize-none"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-center">
+                    <button type="submit"
+                        class="px-8 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-bold uppercase tracking-widest hover:bg-violet-700 transition-colors">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State
+    let currentDate = new Date();
+    let currentView = 'month';
+    // Events store: key = 'YYYY-MM-DD', value = array of event objects
+    let calendarEvents = {};
+
+    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    function calendarNav(action) {
+        if (action === 'prev-month') currentDate.setMonth(currentDate.getMonth() - 1);
+        else if (action === 'next-month') currentDate.setMonth(currentDate.getMonth() + 1);
+        else if (action === 'prev-year') currentDate.setFullYear(currentDate.getFullYear() - 1);
+        else if (action === 'next-year') currentDate.setFullYear(currentDate.getFullYear() + 1);
+        else if (action === 'today') currentDate = new Date();
+        renderCalendar();
+    }
+
+    function setView(view) {
+        currentView = view;
+        ['month','week','day','list'].forEach(v => {
+            const btn = document.getElementById('view-' + v);
+            if (v === view) {
+                btn.classList.add('bg-violet-600','text-white');
+                btn.classList.remove('text-slate-600','hover:bg-slate-50');
+            } else {
+                btn.classList.remove('bg-violet-600','text-white');
+                btn.classList.add('text-slate-600','hover:bg-slate-50');
+            }
+        });
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const title = document.getElementById('calendar-title');
+        const grid = document.getElementById('calendar-grid');
+        const today = new Date();
+        const todayStr = dateKey(today);
+
+        title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+        grid.innerHTML = '';
+
+        if (currentView === 'month') {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                let dayNum, cellDateStr, isCurrentMonth = true;
+
+                if (i < firstDay) {
+                    dayNum = daysInPrevMonth - firstDay + i + 1;
+                    isCurrentMonth = false;
+                    const d = new Date(year, month - 1, dayNum);
+                    cellDateStr = dateKey(d);
+                } else if (i >= firstDay + daysInMonth) {
+                    dayNum = i - firstDay - daysInMonth + 1;
+                    isCurrentMonth = false;
+                    const d = new Date(year, month + 1, dayNum);
+                    cellDateStr = dateKey(d);
+                } else {
+                    dayNum = i - firstDay + 1;
+                    cellDateStr = dateKey(new Date(year, month, dayNum));
+                }
+
+                const isToday = cellDateStr === todayStr;
+                const events = calendarEvents[cellDateStr] || [];
+
+                cell.className = 'border-r border-b border-slate-200 dark:border-dark-border min-h-[100px] p-1 cursor-pointer transition-colors hover:bg-violet-50 dark:hover:bg-violet-900/10 relative';
+
+                if (isToday && isCurrentMonth) {
+                    cell.classList.add('bg-violet-600');
+                }
+
+                const numEl = document.createElement('span');
+                numEl.className = 'text-sm font-medium block text-right pr-1 pt-1 ' +
+                    (isToday && isCurrentMonth ? 'text-white' : isCurrentMonth ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600');
+                numEl.textContent = dayNum;
+                cell.appendChild(numEl);
+
+                // Render events
+                events.forEach(ev => {
+                    const evEl = document.createElement('div');
+                    evEl.className = 'mt-0.5 truncate rounded px-1.5 py-0.5 text-xs font-medium ' +
+                        (isToday && isCurrentMonth ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
+                    evEl.textContent = ev.title;
+                    cell.appendChild(evEl);
+                });
+
+                if (isCurrentMonth) {
+                    const clickDate = new Date(year, month, dayNum);
+                    cell.addEventListener('click', () => openModal(clickDate));
+                }
+
+                grid.appendChild(cell);
+            }
+
+        } else if (currentView === 'week') {
+            const startOfWeek = new Date(currentDate);
+            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+            title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(startOfWeek);
+                d.setDate(startOfWeek.getDate() + i);
+                const dStr = dateKey(d);
+                const isToday = dStr === todayStr;
+                const events = calendarEvents[dStr] || [];
+
+                const cell = document.createElement('div');
+                cell.className = 'border-r border-b border-slate-200 dark:border-dark-border min-h-[160px] p-2 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors ' +
+                    (isToday ? 'bg-violet-600' : '');
+
+                const label = document.createElement('div');
+                label.className = 'text-xs font-semibold mb-1 ' + (isToday ? 'text-white' : 'text-slate-500 dark:text-slate-400');
+                label.textContent = DAYS[i] + ' ' + d.getDate();
+                cell.appendChild(label);
+
+                events.forEach(ev => {
+                    const evEl = document.createElement('div');
+                    evEl.className = 'truncate rounded px-1.5 py-0.5 text-xs font-medium mt-0.5 ' +
+                        (isToday ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
+                    evEl.textContent = ev.title;
+                    cell.appendChild(evEl);
+                });
+
+                cell.addEventListener('click', () => openModal(d));
+                grid.appendChild(cell);
+            }
+
+        } else if (currentView === 'day') {
+            const dStr = dateKey(currentDate);
+            const isToday = dStr === todayStr;
+            const events = calendarEvents[dStr] || [];
+
+            title.textContent = DAY_NAMES[currentDate.getDay()] + ', ' + MONTHS[currentDate.getMonth()] + ' ' + currentDate.getDate() + ', ' + currentDate.getFullYear();
+
+            const cell = document.createElement('div');
+            cell.className = 'col-span-7 border-r border-b border-slate-200 dark:border-dark-border min-h-[200px] p-4 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors ' +
+                (isToday ? 'bg-violet-600' : '');
+
+            if (events.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-sm ' + (isToday ? 'text-white/70' : 'text-slate-400');
+                empty.textContent = 'No events. Click to add one.';
+                cell.appendChild(empty);
+            }
+
+            events.forEach(ev => {
+                const evEl = document.createElement('div');
+                evEl.className = 'rounded-lg px-3 py-2 text-sm font-medium mb-2 ' +
+                    (isToday ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
+                evEl.innerHTML = '<span class="font-bold">' + ev.title + '</span>' +
+                    (ev.location ? ' — ' + ev.location : '') +
+                    (ev.description ? '<br><span class="text-xs opacity-75">' + ev.description + '</span>' : '');
+                cell.appendChild(evEl);
+            });
+
+            cell.addEventListener('click', () => openModal(currentDate));
+            grid.appendChild(cell);
+
+        } else if (currentView === 'list') {
+            title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let hasEvents = false;
+
+            const listWrapper = document.createElement('div');
+            listWrapper.className = 'col-span-7 divide-y divide-slate-100 dark:divide-dark-border';
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const dStr = dateKey(date);
+                const events = calendarEvents[dStr] || [];
+                if (events.length === 0) continue;
+                hasEvents = true;
+
+                events.forEach(ev => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-start gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
+                    row.innerHTML = `
+                        <div class="w-16 shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400">${DAYS[date.getDay()]} ${d}</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-slate-800 dark:text-white">${ev.title}</p>
+                            ${ev.location ? `<p class="text-xs text-slate-500 dark:text-slate-400">${ev.location}</p>` : ''}
+                            ${ev.description ? `<p class="text-xs text-slate-400 mt-0.5">${ev.description}</p>` : ''}
+                        </div>
+                        <span class="text-xs rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 px-2 py-0.5 font-medium">${ev.role || ''}</span>
+                    `;
+                    listWrapper.appendChild(row);
+                });
+            }
+
+            if (!hasEvents) {
+                const empty = document.createElement('p');
+                empty.className = 'col-span-7 py-12 text-center text-sm text-slate-400';
+                empty.textContent = 'No events this month.';
+                grid.appendChild(empty);
+                return;
+            }
+
+            grid.appendChild(listWrapper);
+        }
+    }
+
+    function dateKey(date) {
+        return date.getFullYear() + '-' +
+            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+            String(date.getDate()).padStart(2, '0');
+    }
+
+    function openModal(date) {
+        const dayName = DAY_NAMES[date.getDay()];
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+
+        document.getElementById('modal-title').textContent = `Add Event (${dayName}- ${month}- ${day}- ${year})`;
+        document.getElementById('event-date').value = dateKey(date);
+        document.getElementById('event-form').reset();
+        document.getElementById('event-date').value = dateKey(date);
+        document.getElementById('event-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('event-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function saveEvent(e) {
+        e.preventDefault();
+        const date = document.getElementById('event-date').value;
+        const title = document.getElementById('event-title').value.trim();
+        const role = document.getElementById('event-role').value;
+        const location = document.getElementById('event-location').value.trim();
+        const description = document.getElementById('event-description').value.trim();
+        const url = document.getElementById('event-url').value.trim();
+
+        if (!date || !title) return;
+
+        if (!calendarEvents[date]) calendarEvents[date] = [];
+        calendarEvents[date].push({ title, role, location, description, url });
+
+        closeModal();
+        renderCalendar();
+
+        // Uncomment below to submit via AJAX to your Laravel backend:
+        /*
+        fetch('/events', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ event_date: date, event_title: title, role, event_location: location, description, url })
+        }).then(res => res.json()).then(data => {
+            console.log('Saved:', data);
+        }).catch(err => console.error(err));
+        */
+    }
+
+    // Init
+    renderCalendar();
+</script>
+
+<!-- 
+ Data Table -
 <div class="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-card">
     <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-dark-border">
         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
@@ -478,12 +880,13 @@
                             <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-orange-100 to-amber-100 dark:from-orange-900/40 dark:to-amber-900/40 flex items-center justify-center text-xs font-bold text-orange-800 dark:text-orange-200">SM</div>
                             <div class="flex flex-col">
                                 <span class="font-medium text-slate-900 dark:text-white">Sarah Miller</span>
-                                <span class="text-xs text-slate-500">sarah@studio.io</span>
+                                <span class="text-xs text-slate-500">sarah@studio.io</span> 
                             </div>
                         </div>
+                      
                     </td>
                     <td class="p-4"><span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">Pending</span></td>
-                    <td class="p-4 text-slate-500 dark:text-slate-400">Oct 23, 2023</td>
+                    <td class="p-4 text-slate-500 dark:text-slate-400">Oct 23, 202fdfdfd</td>
                     <td class="p-4 font-medium text-slate-900 dark:text-white">$1,200.00</td>
                     <td class="p-4 text-right"><button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors"><iconify-icon icon="solar:menu-dots-linear" width="20"></iconify-icon></button></td>
                 </tr>
@@ -521,7 +924,7 @@
     </div>
 </div>
 
-                <div class="mt-8 text-center">
+                <div class="mt-8 text-center"> -->
                     <p class="text-xs text-slate-400">© 2026 My Messiah School of Cavite. All rights reserved.</p>
                 </div>
 
