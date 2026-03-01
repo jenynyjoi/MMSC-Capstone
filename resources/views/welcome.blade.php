@@ -97,6 +97,7 @@
       </form>
     </div>
   </main>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.getElementById('togglePassword');
@@ -111,7 +112,6 @@
     });
   }
 });
-
 </script>
 </body>
 </html>
