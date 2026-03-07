@@ -14,46 +14,8 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
 
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Landing background slideshow */
-        #landingPage {
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            transition: background-image 0.8s ease-in-out;
-        }
-
-        /* Navbar scroll effect */
-        .navbar-scrolled {
-            @apply shadow-lg backdrop-blur-md;
-            background-color: rgba(255, 255, 255, 0.95) !important;
-        }
-        .dark .navbar-scrolled {
-            background-color: rgba(15, 23, 42, 0.95) !important;
-        }
-
-        /* Program card hover */
-        .program-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .program-card:hover {
-            transform: translateY(-6px);
-        }
-
-        /* Dot animation */
-        .dot.active {
-            width: 24px;
-        }
-
-        /* Dark mode transition */
-        *, *::before, *::after {
-            transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease;
-        }
-    </style>
 </head>
 
 <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased">
@@ -66,7 +28,7 @@
 
                     <!-- Logo -->
                     <a href="{{ url('/') }}" class="flex items-center gap-3 group">
-                        <img src="{{ asset('images/messiah logo.png') }}" alt="logo" class="w-10 h-10 object-contain">
+                        <img src="{{ asset('images/logo.png') }}" alt="Logdso" class="w-10 h-10 object-contain">
                         <span class="hidden sm:block text-sm font-bold text-blue-700 dark:text-blue-400 tracking-wide leading-tight uppercase">
                             My Messiah<br>School of Cavite
                         </span>
@@ -135,6 +97,7 @@
                         </button>
 
                         <!-- Login Button -->
+                        <!-- <a href="{{ route('login') }}" -->
                         <a href="{{ route('login') }}"
                             class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-sm shadow-blue-500/30 transition-all">
                             Login
@@ -431,51 +394,6 @@
     </footer>
 
 
-    <!-- ===================== SCRIPTS ===================== -->
-    <script>
-        // ---- Navbar scroll effect ----
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            navbar.classList.toggle('navbar-scrolled', window.scrollY > 20);
-        });
-
-        // ---- Background slideshow ----
-        const images = [
-            "{{ asset('images/landing bg.png') }}",
-            "{{ asset('images/schoolBG.png') }}",
-            "{{ asset('images/bg messiah.jpg') }}"
-        ];
-
-        const gradient = `linear-gradient(
-            to bottom,
-            rgba(13, 96, 184, 0.9) 0%,
-            rgba(26, 94, 158, 0.75) 25%,
-            rgba(48, 125, 183, 0.6) 50%,
-            rgba(141, 204, 238, 0.75) 75%,
-            rgba(233, 244, 250, 0.95) 100%
-        )`;
-
-        let currentIndex = 0;
-        const landing = document.getElementById('landingPage');
-        const dots = document.querySelectorAll('.dot');
-
-        function setBackground(i) {
-            currentIndex = i;
-            landing.style.backgroundImage = `${gradient}, url("${images[i]}")`;
-            dots.forEach((d, idx) => {
-                d.classList.toggle('active', idx === i);
-                d.classList.toggle('!w-6', idx === i);
-                d.classList.toggle('!bg-white', idx === i);
-                d.classList.toggle('bg-white/50', idx !== i);
-            });
-        }
-
-        dots.forEach(dot => {
-            dot.addEventListener('click', () => setBackground(parseInt(dot.dataset.index)));
-        });
-
-        setInterval(() => setBackground((currentIndex + 1) % images.length), 5000);
-    </script>
 
     <!-- Alpine.js for dropdowns & dark mode (add to app.js or load via CDN) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

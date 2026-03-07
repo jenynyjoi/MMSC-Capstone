@@ -3,7 +3,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MMSC Admin Dashboard</title>
-    @vite(['resources/css/app.css','resources/js/app.js'])
+
+    @vite(['resources/css/app.css','resources/js/dashboard.js'])
 
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,9 +33,9 @@
                             <span id="logo-text" class="text-xs text-white/70 font-medium">Admin</span>
                         </div>
                     </div>
-                  
                 </div>
-                <!-- Nav --> 
+
+                <!-- Nav bar content --> 
                 <nav class="space-y-1 px-3 py-6"> 
                     @php 
                         $navItems = [
@@ -135,169 +136,169 @@
                     </div>
                 </div>
                                 <!-- Stats Grid - MMSC Dashboard Style -->
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    <!-- Card 1: Students -->
-    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 mb-3">
-                    <iconify-icon icon="solar:users-group-rounded-linear" width="22" class="text-blue-500 dark:text-blue-300"></iconify-icon>
-                </div>
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Students</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500">Total Enrolled Students</p>
-            </div>
-            <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
-        </div>
-    </div>
-
-    <!-- Card 2: Teachers -->
-    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 mb-3">
-                    <iconify-icon icon="solar:user-id-linear" width="22" class="text-yellow-500 dark:text-yellow-300"></iconify-icon>
-                </div>
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Teachers</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500">Total Teachers</p>
-            </div>
-            <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
-        </div>
-    </div>
-
-    <!-- Card 3: Parents -->
-    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 mb-3">
-                    <iconify-icon icon="solar:users-group-two-rounded-linear" width="22" class="text-red-500 dark:text-red-300"></iconify-icon>
-                </div>
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Parents</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500">Total Parents</p>
-            </div>
-            <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
-        </div>
-    </div>
-
-    <!-- Card 4: Sections -->
-    <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
-        <div class="flex items-start justify-between">
-            <div>
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 mb-3">
-                    <iconify-icon icon="solar:widget-linear" width="22" class="text-green-600 dark:text-green-300"></iconify-icon>
-                </div>
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Sections</p>
-                <p class="text-xs text-slate-400 dark:text-slate-500">Total Active Sections</p>
-            </div>
-            <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
-        </div>
-    </div>
-</div>
-<!-- Quick Action & Latest Announcement -->
-<div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-    <!-- Quick Action -->
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
-        <div class="mb-5 flex items-center gap-3">
-            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
-                <iconify-icon icon="solar:bolt-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
-            </div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Quick Action</h3>
-        </div>
-        <div class="flex flex-col gap-3">
-            <button class="w-full rounded-lg border border-blue-400 py-2.5 text-sm font-medium text-blue-500 transition hover:bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/20">
-                Enroll Student
-            </button>
-            <button class="w-full rounded-lg border border-yellow-400 py-2.5 text-sm font-medium text-yellow-500 transition hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-400 dark:hover:bg-yellow-900/20">
-                Update Clearance
-            </button>
-            <button class="w-full rounded-lg border border-green-400 py-2.5 text-sm font-medium text-green-600 transition hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20">
-                View Schedules
-            </button>
-            <button class="w-full rounded-lg border border-red-400 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-900/20">
-                Post Announcement
-            </button>
-        </div>
-    </div>
-
-    <!-- Latest Announcement -->
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
-        <div class="mb-5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
-                    <iconify-icon icon="solar:document-text-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
-                </div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Latest Announcement</h3>
-            </div>
-            <button class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 text-lg font-bold">
-                +
-            </button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead>
-                    <tr class="border-b border-slate-100 dark:border-dark-border text-xs font-medium text-slate-500 dark:text-slate-400">
-                        <th class="pb-3 pr-4">Title</th>
-                        <th class="pb-3 pr-4">Date</th>
-                        <th class="pb-3 pr-4">Time</th>
-                        <th class="pb-3 pr-4">Sender</th>
-                        <th class="pb-3 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-dark-border">
-                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td class="py-3 pr-4">
-                            <div class="flex items-center gap-2">
-                                <span class="h-2 w-2 rounded-full bg-yellow-400 shrink-0"></span>
-                                <span class="text-slate-700 dark:text-slate-300 text-xs">Enrollment Procedures</span>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Card 1: Students -->
+                <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 mb-3">
+                                <iconify-icon icon="solar:users-group-rounded-linear" width="22" class="text-blue-500 dark:text-blue-300"></iconify-icon>
                             </div>
-                        </td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">19 January, 2026</td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
-                        <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Jeneva Ybanez</td>
-                        <td class="py-3 text-right">
-                            <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
-                                <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td class="py-3 pr-4">
-                            <div class="flex items-center gap-2">
-                                <span class="h-2 w-2 rounded-full bg-red-500 shrink-0"></span>
-                                <span class="text-slate-700 dark:text-slate-300 text-xs">Class Suspension</span>
-                            </div>
-                        </td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">23 January, 2026</td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
-                        <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Hans Gayon</td>
-                        <td class="py-3 text-right">
-                            <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
-                                <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
-                            </button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td class="py-3 pr-4">
-                            <div class="flex items-center gap-2">
-                                <span class="h-2 w-2 rounded-full bg-green-500 shrink-0"></span>
-                                <span class="text-slate-700 dark:text-slate-300 text-xs">Report Approval</span>
-                            </div>
-                        </td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">29 January, 2026</td>
-                        <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
-                        <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Dianne Balaoro</td>
-                        <td class="py-3 text-right">
-                            <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
-                                <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Students</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">Total Enrolled Students</p>
+                        </div>
+                        <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    </div>
+                </div>
 
-</div>
+                <!-- Card 2: Teachers -->
+                <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 mb-3">
+                                <iconify-icon icon="solar:user-id-linear" width="22" class="text-yellow-500 dark:text-yellow-300"></iconify-icon>
+                            </div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Teachers</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">Total Teachers</p>
+                        </div>
+                        <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    </div>
+                </div>
+
+                <!-- Card 3: Parents -->
+                <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 mb-3">
+                                <iconify-icon icon="solar:users-group-two-rounded-linear" width="22" class="text-red-500 dark:text-red-300"></iconify-icon>
+                            </div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Parents</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">Total Parents</p>
+                        </div>
+                        <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    </div>
+                </div>
+
+                <!-- Card 4: Sections -->
+                <div class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-all hover:-translate-y-1 hover:shadow-lg dark:border-dark-border dark:bg-dark-card dark:shadow-none">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 mb-3">
+                                <iconify-icon icon="solar:widget-linear" width="22" class="text-green-600 dark:text-green-300"></iconify-icon>
+                            </div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Sections</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500">Total Active Sections</p>
+                        </div>
+                        <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Action & Latest Announcement -->
+            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+                <!-- Quick Action -->
+                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
+                    <div class="mb-5 flex items-center gap-3">
+                        <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
+                            <iconify-icon icon="solar:bolt-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
+                        </div>
+                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Quick Action</h3>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <button class="w-full rounded-lg border border-blue-400 py-2.5 text-sm font-medium text-blue-500 transition hover:bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/20">
+                            Enroll Student
+                        </button>
+                        <button class="w-full rounded-lg border border-yellow-400 py-2.5 text-sm font-medium text-yellow-500 transition hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-400 dark:hover:bg-yellow-900/20">
+                            Update Clearance
+                        </button>
+                        <button class="w-full rounded-lg border border-green-400 py-2.5 text-sm font-medium text-green-600 transition hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20">
+                            View Schedules
+                        </button>
+                        <button class="w-full rounded-lg border border-red-400 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-900/20">
+                            Post Announcement
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Latest Announcement -->
+                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
+                    <div class="mb-5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
+                                <iconify-icon icon="solar:document-text-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
+                            </div>
+                            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Latest Announcement</h3>
+                        </div>
+                        <button class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 text-lg font-bold">
+                            +
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-100 dark:border-dark-border text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    <th class="pb-3 pr-4">Title</th>
+                                    <th class="pb-3 pr-4">Date</th>
+                                    <th class="pb-3 pr-4">Time</th>
+                                    <th class="pb-3 pr-4">Sender</th>
+                                    <th class="pb-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-dark-border">
+                                <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <td class="py-3 pr-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-2 w-2 rounded-full bg-yellow-400 shrink-0"></span>
+                                            <span class="text-slate-700 dark:text-slate-300 text-xs">Enrollment Procedures</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">19 January, 2026</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Jeneva Ybanez</td>
+                                    <td class="py-3 text-right">
+                                        <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
+                                            <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <td class="py-3 pr-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-2 w-2 rounded-full bg-red-500 shrink-0"></span>
+                                            <span class="text-slate-700 dark:text-slate-300 text-xs">Class Suspension</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">23 January, 2026</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Hans Gayon</td>
+                                    <td class="py-3 text-right">
+                                        <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
+                                            <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                    <td class="py-3 pr-4">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-2 w-2 rounded-full bg-green-500 shrink-0"></span>
+                                            <span class="text-slate-700 dark:text-slate-300 text-xs">Report Approval</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">29 January, 2026</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">4:00 pm</td>
+                                    <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">Dianne Balaoro</td>
+                                    <td class="py-3 text-right">
+                                        <button class="text-slate-400 hover:text-brand-900 dark:hover:text-white transition-colors">
+                                            <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
 
 <!-- Charts Section -->
 <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -555,278 +556,7 @@
     </div>
 </div>
 
-<script>
-    // State
-    let currentDate = new Date();
-    let currentView = 'month';
-    // Events store: key = 'YYYY-MM-DD', value = array of event objects
-    let calendarEvents = {};
 
-    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
-    function calendarNav(action) {
-        if (action === 'prev-month') currentDate.setMonth(currentDate.getMonth() - 1);
-        else if (action === 'next-month') currentDate.setMonth(currentDate.getMonth() + 1);
-        else if (action === 'prev-year') currentDate.setFullYear(currentDate.getFullYear() - 1);
-        else if (action === 'next-year') currentDate.setFullYear(currentDate.getFullYear() + 1);
-        else if (action === 'today') currentDate = new Date();
-        renderCalendar();
-    }
-
-    function setView(view) {
-        currentView = view;
-        ['month','week','day','list'].forEach(v => {
-            const btn = document.getElementById('view-' + v);
-            if (v === view) {
-                btn.classList.add('bg-violet-600','text-white');
-                btn.classList.remove('text-slate-600','hover:bg-slate-50');
-            } else {
-                btn.classList.remove('bg-violet-600','text-white');
-                btn.classList.add('text-slate-600','hover:bg-slate-50');
-            }
-        });
-        renderCalendar();
-    }
-
-    function renderCalendar() {
-        const title = document.getElementById('calendar-title');
-        const grid = document.getElementById('calendar-grid');
-        const today = new Date();
-        const todayStr = dateKey(today);
-
-        title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
-        grid.innerHTML = '';
-
-        if (currentView === 'month') {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const daysInPrevMonth = new Date(year, month, 0).getDate();
-            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
-
-            for (let i = 0; i < totalCells; i++) {
-                const cell = document.createElement('div');
-                let dayNum, cellDateStr, isCurrentMonth = true;
-
-                if (i < firstDay) {
-                    dayNum = daysInPrevMonth - firstDay + i + 1;
-                    isCurrentMonth = false;
-                    const d = new Date(year, month - 1, dayNum);
-                    cellDateStr = dateKey(d);
-                } else if (i >= firstDay + daysInMonth) {
-                    dayNum = i - firstDay - daysInMonth + 1;
-                    isCurrentMonth = false;
-                    const d = new Date(year, month + 1, dayNum);
-                    cellDateStr = dateKey(d);
-                } else {
-                    dayNum = i - firstDay + 1;
-                    cellDateStr = dateKey(new Date(year, month, dayNum));
-                }
-
-                const isToday = cellDateStr === todayStr;
-                const events = calendarEvents[cellDateStr] || [];
-
-                cell.className = 'border-r border-b border-slate-200 dark:border-dark-border min-h-[100px] p-1 cursor-pointer transition-colors hover:bg-violet-50 dark:hover:bg-violet-900/10 relative';
-
-                if (isToday && isCurrentMonth) {
-                    cell.classList.add('bg-violet-600');
-                }
-
-                const numEl = document.createElement('span');
-                numEl.className = 'text-sm font-medium block text-right pr-1 pt-1 ' +
-                    (isToday && isCurrentMonth ? 'text-white' : isCurrentMonth ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600');
-                numEl.textContent = dayNum;
-                cell.appendChild(numEl);
-
-                // Render events
-                events.forEach(ev => {
-                    const evEl = document.createElement('div');
-                    evEl.className = 'mt-0.5 truncate rounded px-1.5 py-0.5 text-xs font-medium ' +
-                        (isToday && isCurrentMonth ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
-                    evEl.textContent = ev.title;
-                    cell.appendChild(evEl);
-                });
-
-                if (isCurrentMonth) {
-                    const clickDate = new Date(year, month, dayNum);
-                    cell.addEventListener('click', () => openModal(clickDate));
-                }
-
-                grid.appendChild(cell);
-            }
-
-        } else if (currentView === 'week') {
-            const startOfWeek = new Date(currentDate);
-            startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-            title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
-
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(startOfWeek);
-                d.setDate(startOfWeek.getDate() + i);
-                const dStr = dateKey(d);
-                const isToday = dStr === todayStr;
-                const events = calendarEvents[dStr] || [];
-
-                const cell = document.createElement('div');
-                cell.className = 'border-r border-b border-slate-200 dark:border-dark-border min-h-[160px] p-2 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors ' +
-                    (isToday ? 'bg-violet-600' : '');
-
-                const label = document.createElement('div');
-                label.className = 'text-xs font-semibold mb-1 ' + (isToday ? 'text-white' : 'text-slate-500 dark:text-slate-400');
-                label.textContent = DAYS[i] + ' ' + d.getDate();
-                cell.appendChild(label);
-
-                events.forEach(ev => {
-                    const evEl = document.createElement('div');
-                    evEl.className = 'truncate rounded px-1.5 py-0.5 text-xs font-medium mt-0.5 ' +
-                        (isToday ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
-                    evEl.textContent = ev.title;
-                    cell.appendChild(evEl);
-                });
-
-                cell.addEventListener('click', () => openModal(d));
-                grid.appendChild(cell);
-            }
-
-        } else if (currentView === 'day') {
-            const dStr = dateKey(currentDate);
-            const isToday = dStr === todayStr;
-            const events = calendarEvents[dStr] || [];
-
-            title.textContent = DAY_NAMES[currentDate.getDay()] + ', ' + MONTHS[currentDate.getMonth()] + ' ' + currentDate.getDate() + ', ' + currentDate.getFullYear();
-
-            const cell = document.createElement('div');
-            cell.className = 'col-span-7 border-r border-b border-slate-200 dark:border-dark-border min-h-[200px] p-4 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/10 transition-colors ' +
-                (isToday ? 'bg-violet-600' : '');
-
-            if (events.length === 0) {
-                const empty = document.createElement('p');
-                empty.className = 'text-sm ' + (isToday ? 'text-white/70' : 'text-slate-400');
-                empty.textContent = 'No events. Click to add one.';
-                cell.appendChild(empty);
-            }
-
-            events.forEach(ev => {
-                const evEl = document.createElement('div');
-                evEl.className = 'rounded-lg px-3 py-2 text-sm font-medium mb-2 ' +
-                    (isToday ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300');
-                evEl.innerHTML = '<span class="font-bold">' + ev.title + '</span>' +
-                    (ev.location ? ' — ' + ev.location : '') +
-                    (ev.description ? '<br><span class="text-xs opacity-75">' + ev.description + '</span>' : '');
-                cell.appendChild(evEl);
-            });
-
-            cell.addEventListener('click', () => openModal(currentDate));
-            grid.appendChild(cell);
-
-        } else if (currentView === 'list') {
-            title.textContent = MONTHS[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let hasEvents = false;
-
-            const listWrapper = document.createElement('div');
-            listWrapper.className = 'col-span-7 divide-y divide-slate-100 dark:divide-dark-border';
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const date = new Date(year, month, d);
-                const dStr = dateKey(date);
-                const events = calendarEvents[dStr] || [];
-                if (events.length === 0) continue;
-                hasEvents = true;
-
-                events.forEach(ev => {
-                    const row = document.createElement('div');
-                    row.className = 'flex items-start gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
-                    row.innerHTML = `
-                        <div class="w-16 shrink-0 text-sm font-semibold text-violet-600 dark:text-violet-400">${DAYS[date.getDay()]} ${d}</div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-slate-800 dark:text-white">${ev.title}</p>
-                            ${ev.location ? `<p class="text-xs text-slate-500 dark:text-slate-400">${ev.location}</p>` : ''}
-                            ${ev.description ? `<p class="text-xs text-slate-400 mt-0.5">${ev.description}</p>` : ''}
-                        </div>
-                        <span class="text-xs rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 px-2 py-0.5 font-medium">${ev.role || ''}</span>
-                    `;
-                    listWrapper.appendChild(row);
-                });
-            }
-
-            if (!hasEvents) {
-                const empty = document.createElement('p');
-                empty.className = 'col-span-7 py-12 text-center text-sm text-slate-400';
-                empty.textContent = 'No events this month.';
-                grid.appendChild(empty);
-                return;
-            }
-
-            grid.appendChild(listWrapper);
-        }
-    }
-
-    function dateKey(date) {
-        return date.getFullYear() + '-' +
-            String(date.getMonth() + 1).padStart(2, '0') + '-' +
-            String(date.getDate()).padStart(2, '0');
-    }
-
-    function openModal(date) {
-        const dayName = DAY_NAMES[date.getDay()];
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const year = date.getFullYear();
-
-        document.getElementById('modal-title').textContent = `Add Event (${dayName}- ${month}- ${day}- ${year})`;
-        document.getElementById('event-date').value = dateKey(date);
-        document.getElementById('event-form').reset();
-        document.getElementById('event-date').value = dateKey(date);
-        document.getElementById('event-modal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-        document.getElementById('event-modal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function saveEvent(e) {
-        e.preventDefault();
-        const date = document.getElementById('event-date').value;
-        const title = document.getElementById('event-title').value.trim();
-        const role = document.getElementById('event-role').value;
-        const location = document.getElementById('event-location').value.trim();
-        const description = document.getElementById('event-description').value.trim();
-        const url = document.getElementById('event-url').value.trim();
-
-        if (!date || !title) return;
-
-        if (!calendarEvents[date]) calendarEvents[date] = [];
-        calendarEvents[date].push({ title, role, location, description, url });
-
-        closeModal();
-        renderCalendar();
-
-        // Uncomment below to submit via AJAX to your Laravel backend:
-        /*
-        fetch('/events', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-            body: JSON.stringify({ event_date: date, event_title: title, role, event_location: location, description, url })
-        }).then(res => res.json()).then(data => {
-            console.log('Saved:', data);
-        }).catch(err => console.error(err));
-        */
-    }
-
-    // Init
-    renderCalendar();
-</script>
 
 <!-- 
  Data Table -

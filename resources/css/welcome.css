@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* Landing background slideshow */
+#landingPage {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.8s ease-in-out;
+}
+
+/* Navbar scroll effect */
+.navbar-scrolled {
+    @apply shadow-lg backdrop-blur-md;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+}
+.dark .navbar-scrolled {
+    background-color: rgba(15, 23, 42, 0.95) !important;
+}
+
+/* Program card hover */
+.program-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.program-card:hover {
+    transform: translateY(-6px);
+}
+
+/* Dot animation */
+.dot.active {
+    width: 24px;
+}
+
+/* Dark mode transition */
+*, *::before, *::after {
+    transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease;
+}

@@ -20,3 +20,7 @@ Route::get('/', function () {
 Route::get('admin/dashboard', function () {
     return view('admin.dashboard');
 });
+// login signup route in welcom blade files
+Route::get('/auth/login', function () {
+    return view('auth.login');
+})->name('login');
