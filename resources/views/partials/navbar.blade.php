@@ -6,8 +6,9 @@
 
                     <!-- Logo -->
                     <a href="{{ url('/') }}" class="flex items-center gap-3 group">
-                        <img src="{{ asset('images/full-logo.png') }}"alt="Logo" class="w-10 h-10 object-contain">
+                        <img src="{{ asset('images/full-logo.jpg') }}" alt="Logos">
 
+                        <!-- <img src="{{ asset('images/full-logo.jpg') }}" alt="Logossdsd" class="w-10 h-10 object-contain"> -->
                         <span class="hidden sm:block text-sm font-bold text-slate-700 dark:text-blue-400 tracking-wide leading-tight uppercase">
                             My Messiah School of Cavite
                         </span>
@@ -80,7 +81,7 @@
                         <!-- <a href="{{ route('login') }}" -->
                         <a href="{{ route('login') }}"
                             class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg shadow-sm shadow-blue-500/30 transition-all">
-                            Login
+                            Login 
                         </a>
 
                         <!-- Mobile Hamburger -->

@@ -2,3 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+    }
+
+    /* icon-only collapsed sidebar */
+    .sidebar-icon-only {
+        width: 5rem !important;
+    }
+
+    .sidebar-icon-only .nav-text,
+    .sidebar-icon-only #logo-text,
+    .sidebar-icon-only #user-info,
+    .sidebar-icon-only .border-t {
+        display: none;
+    }
+
+    .sidebar-icon-only nav a {
+        @apply justify-center px-0;
+    }
+    
+    .sidebar-icon-only .flex-col span {
+        display: none;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
