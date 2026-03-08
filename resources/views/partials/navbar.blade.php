@@ -5,14 +5,14 @@
                 <div class="flex items-center justify-between h-16">
 
                     <!-- Logo -->
-                     <p>{{ asset('images/logo.png') }}</p>
-
                     <a href="{{ url('/') }}" class="flex items-center gap-3 group">
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-10 h-10 object-contain">
-                        <span class="hidden sm:block text-sm font-bold text-dark-700 dark:text-blue-400 tracking-wide leading-tight uppercase">
+                        <img src="{{ asset('images/full-logo.png') }}"alt="Logo" class="w-10 h-10 object-contain">
+
+                        <span class="hidden sm:block text-sm font-bold text-slate-700 dark:text-blue-400 tracking-wide leading-tight uppercase">
                             My Messiah School of Cavite
                         </span>
                     </a>
+
 
                     <!-- Desktop Nav Links -->
                     <ul class="hidden lg:flex items-center gap-1">
