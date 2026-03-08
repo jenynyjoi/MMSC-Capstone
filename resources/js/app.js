@@ -1,6 +1,7 @@
 import './bootstrap';
-import './dashboard';
-import './welcome';
-import './dashboard';
 
+import Alpine from 'alpinejs';
 
+window.Alpine = Alpine;
+
+Alpine.start();

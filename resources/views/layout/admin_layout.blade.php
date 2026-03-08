@@ -35,7 +35,7 @@
             {{-- Top Navigation --}}
             <header class="shrink-0 sticky top-0 z-30 flex h-16 items-center justify-between
                            border-b border-white/10 px-4 lg:px-8
-                           bg-[#0d4c8f] dark:bg-[#0a3a6e]">
+                           bg-[#0d4c8f]">
 
                 <div class="flex items-center gap-4">
 
@@ -97,18 +97,18 @@
 
                         <div id="profile-menu"
                             class="absolute right-0 top-full mt-1 w-48 rounded-lg shadow-lg
-                                   bg-white dark:bg-[#0a3a6e] hidden z-50">
+                                   bg-white hidden z-50">
                             <a href="#" class="block px-4 py-2 text-sm text-slate-700
-                                               dark:text-white hover:bg-slate-100 dark:hover:bg-white/10">
+                                               hover:bg-slate-100">
                                 Profile
                             </a>
                             <a href="#" class="block px-4 py-2 text-sm text-slate-700
-                                               dark:text-white hover:bg-slate-100 dark:hover:bg-white/10">
+                                               hover:bg-slate-100">
                                 Settings
                             </a>
-                            <div class="border-t border-slate-200 dark:border-white/20 my-1"></div>
+                            <div class="border-t border-slate-200 my-1"></div>
                             <a href="#" class="block px-4 py-2 text-sm text-red-500 font-medium
-                                               hover:bg-slate-100 dark:hover:bg-white/10">
+                                               hover:bg-slate-100">
                                 Logout
                             </a>
                         </div>
