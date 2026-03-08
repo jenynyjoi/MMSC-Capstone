@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ dark: false, mobileMenu: false }" :class="dark ? 'dark' : ''">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@yield('title', 'My Messiah School of Cavite')</title>
+
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
+    
+
+    @stack('styles')   {{-- ← for page-specific CSS --}}
+</head>
+
+<body>
+    <!-- <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased"> -->
+
+
+    @include('partials.navbar')   {{-- ← your navbar --}}
+
+    @yield('content')                     {{-- ← page content goes here --}}
+
+    @include('partials.footer')   {{-- ← your footer --}}
+
+    @stack('scripts')  {{-- ← for page-specific JS --}}
+
+</body>
+</html>
