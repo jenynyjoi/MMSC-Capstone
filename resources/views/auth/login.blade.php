@@ -38,16 +38,60 @@
 
     <div
       class="relative w-[410px] rounded-none bg-white shadow-card border border-white/20
-             backdrop-blur-xl overflow-hidden
-             animate-fadeUp"
+             backdrop-blur-xl overflow-hidden animate-fadeUp"
     >
 
-      <!-- Session Status (e.g. password reset success) -->
-      @if (session('status'))
-        <div class="px-6 pt-4">
-          <div class="p-3 rounded-lg bg-green-50 text-green-700 text-sm">
-            {{ session('status') }}
+      {{-- ── Inline Error Message (wrong credentials) ── --}}
+      @error('email')
+        <div id="alert-error"
+             class="mx-6 mt-5 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
+            <i class="fas fa-xmark text-red-600 text-xs"></i>
           </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-red-700">Login Failed</p>
+            <p class="text-xs text-red-500 mt-0.5">{{ $message }}</p>
+          </div>
+          <button onclick="document.getElementById('alert-error').remove()"
+                  class="text-red-300 hover:text-red-500 transition-colors ml-1">
+            <i class="fas fa-xmark text-xs"></i>
+          </button>
+        </div>
+      @enderror
+
+      {{-- ── Inline Status Message (e.g. password reset link sent) ── --}}
+      @if (session('status'))
+        <div id="alert-status"
+             class="mx-6 mt-5 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
+            <i class="fas fa-info text-blue-600 text-xs"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-blue-700">Notice</p>
+            <p class="text-xs text-blue-500 mt-0.5">{{ session('status') }}</p>
+          </div>
+          <button onclick="document.getElementById('alert-status').remove()"
+                  class="text-blue-300 hover:text-blue-500 transition-colors ml-1">
+            <i class="fas fa-xmark text-xs"></i>
+          </button>
+        </div>
+      @endif
+
+      {{-- ── Inline Success Message ── --}}
+      @if (session('success'))
+        <div id="alert-success"
+             class="mx-6 mt-5 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100">
+            <i class="fas fa-check text-green-600 text-xs"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-green-700">Success</p>
+            <p class="text-xs text-green-500 mt-0.5">{{ session('success') }}</p>
+          </div>
+          <button onclick="document.getElementById('alert-success').remove()"
+                  class="text-green-300 hover:text-green-500 transition-colors ml-1">
+            <i class="fas fa-xmark text-xs"></i>
+          </button>
         </div>
       @endif
 
@@ -55,8 +99,7 @@
       <form method="POST" action="{{ route('login') }}" class="relative z-8 flex flex-col gap-0 px-6 pb-11 pt-5" novalidate>
         @csrf
 
-  
-        <h1 class="text-4xl font-bold text-gray-800  mt-20 mb-10 leading-tight">Login</h1>
+        <h1 class="text-4xl font-bold text-gray-800 mt-20 mb-10 leading-tight">Login</h1>
 
         <!-- Email -->
         <div class="float-label relative border-b-2 border-gray-800 mb-4 @error('email') border-red-500 @enderror">
@@ -73,9 +116,6 @@
           />
           <label for="email">Enter your Email</label>
         </div>
-        @error('email')
-          <p class="text-xs text-red-500 -mt-3 mb-3">{{ $message }}</p>
-        @enderror
 
         <!-- Password -->
         <div class="float-label relative border-b-2 border-gray-800 mb-1 @error('password') border-red-500 @enderror">
@@ -132,9 +172,10 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+      // ── Toggle Password Visibility ──
       const toggleBtn = document.getElementById('togglePassword');
       const pwInput   = document.getElementById('password');
-
       if (toggleBtn && pwInput) {
         toggleBtn.addEventListener('click', () => {
           const isPassword = pwInput.type === 'password';
@@ -143,6 +184,20 @@
           toggleBtn.classList.toggle('fa-eye-slash',  isPassword);
         });
       }
+
+      // ── Auto-dismiss alerts after 5 seconds ──
+      ['alert-error', 'alert-status', 'alert-success'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            el.style.opacity    = '0';
+            el.style.transform  = 'translateY(-8px)';
+            setTimeout(() => el.remove(), 400);
+          }, 5000);
+        }
+      });
+
     });
   </script>
 

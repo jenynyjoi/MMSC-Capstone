@@ -17,6 +17,7 @@
     @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
     
 
+
     @stack('styles')   {{-- ← for page-specific CSS --}}
 </head>
 
@@ -24,13 +25,13 @@
     <!-- <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased"> -->
 
 
-    @include('partials.navbar')   {{-- ← your navbar --}}
+    @include('partials.navbar')   {{--  navbar --}}
 
-    @yield('content')                     {{-- ← page content goes here --}}
+    @yield('content')          {{--  page content  --}}
 
-    @include('partials.footer')   {{-- ← your footer --}}
+    @include('partials.footer')   {{-- footer --}}
 
-    @stack('scripts')  {{-- ← for page-specific JS --}}
+    @stack('scripts')  {{-- page-specific JS --}}
 
 </body>
 </html>

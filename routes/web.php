@@ -33,6 +33,21 @@ Route::middleware(['auth', 'role:super_admin'])->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/admission', [AdminController::class, 'admission'])->name('admin.admission');
+    Route::get('/admin/enrollment', [AdminController::class, 'enrollment'])->name('admin.enrollment');
+    Route::get('/admin/student-records', [AdminController::class, 'studentRecords'])->name('admin.student-records.index');
+    Route::get('/admin/student-records/documents', [AdminController::class, 'studentDocuments'])->name('admin.student-records.documents');
+    Route::get('/admin/clearance', [AdminController::class, 'clearance'])->name('admin.clearance');
+    Route::get('/admin/academics/subjects', [AdminController::class, 'subjects'])->name('admin.academics.subjects');
+    Route::get('/admin/academics/curriculum', [AdminController::class, 'curriculum'])->name('admin.academics.curriculum');
+    Route::get('/admin/classes', [AdminController::class, 'classes'])->name('admin.classes');
+    Route::get('/admin/schedule', [AdminController::class, 'schedule'])->name('admin.schedule');
+    Route::get('/admin/teachers', [AdminController::class, 'teachers'])->name('admin.teachers');
+    Route::get('/admin/announcements', [AdminController::class, 'announcements'])->name('admin.announcements');
+    Route::get('/admin/reports/summary', [AdminController::class, 'reportsSummary'])->name('admin.reports.summary');
+    Route::get('/admin/reports/analytics', [AdminController::class, 'reportsAnalytics'])->name('admin.reports.analytics');
+    Route::get('/admin/settings/general', [AdminController::class, 'settingsGeneral'])->name('admin.settings.general');
+    Route::get('/admin/settings/preferences', [AdminController::class, 'settingsPreferences'])->name('admin.settings.preferences');
 });
 
 Route::middleware(['auth', 'role:teacher'])->group(function () {

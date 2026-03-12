@@ -1,4 +1,7 @@
 import './bootstrap';
+import './welcome';
+import './dashboard';
+
 
 import Alpine from 'alpinejs';
 
