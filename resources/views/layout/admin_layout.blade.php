@@ -39,6 +39,14 @@
             padding-left: 0;
             padding-right: 0;
         }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(40px); }

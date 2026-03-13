@@ -15,7 +15,7 @@
         </div>
 
         <!-- ── Nav ── -->
-        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-0.5">
 
             @php
                 $navItems = [
@@ -110,36 +110,43 @@
 
                 @if (count($item['sub']) > 0)
 
-                    {{-- ── Nav Item WITH Dropdown ── --}}
+                    {{-- ── Check if any sub-route is currently active ── --}}
                     @php
                         $isSubActive = false;
-                        foreach($item['sub'] as $sub) {
-                            if(request()->url() === $sub['href']) {
+                        foreach ($item['sub'] as $sub) {
+                            if (request()->url() === $sub['href']) {
                                 $isSubActive = true;
                                 break;
                             }
                         }
                     @endphp
-                    <div x-data="{ open: {{ $isSubActive ? 'true' : 'false' }} }" @mouseenter="open = true" @mouseleave="open = false" class="relative">
+
+                    {{-- ── Nav Item WITH Dropdown ──
+                         open starts true only if a sub-page is currently active
+                         NO mouseenter/mouseleave — click only
+                    ── --}}
+                    <div x-data="{ open: {{ $isSubActive ? 'true' : 'false' }} }">
 
                         {{-- Parent Button --}}
                         <button
                             @click="open = !open"
-                            :class="open || {{ $isSubActive ? 'true' : 'false' }}
+                            :class="open
                                 ? 'bg-blue-50 dark:bg-slate-800 text-[#0d4c8f] dark:text-white'
                                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'"
                             class="group w-full flex items-center gap-3 rounded-lg px-3 py-2.5
                                    text-sm font-medium transition-all duration-200"
                             title="{{ $item['label'] }}">
 
-                            <iconify-icon icon="{{ $item['icon'] }}" width="20"
+                            <iconify-icon
+                                icon="{{ $item['icon'] }}"
+                                width="20"
                                 class="shrink-0"
-                                :class="open || {{ $isSubActive ? 'true' : 'false' }} ? 'text-[#0d4c8f] dark:text-blue-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white'">
+                                :class="open ? 'text-[#0d4c8f] dark:text-blue-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white'">
                             </iconify-icon>
 
                             <span class="nav-text flex-1 text-left">{{ $item['label'] }}</span>
 
-                            {{-- Chevron --}}
+                            {{-- Chevron rotates on open --}}
                             <iconify-icon
                                 icon="solar:alt-arrow-down-linear"
                                 width="16"
@@ -148,7 +155,7 @@
                             </iconify-icon>
                         </button>
 
-                        {{-- ── Sub Items with line connector, no dots ── --}}
+                        {{-- ── Sub Items ── --}}
                         <div
                             x-show="open"
                             x-transition:enter="transition ease-out duration-200"
@@ -162,11 +169,11 @@
                             @foreach ($item['sub'] as $sub)
                                 <a href="{{ $sub['href'] }}"
                                    class="flex items-center gap-2 rounded-lg px-3 py-2
-                                          text-xs font-medium text-slate-500 dark:text-slate-400
-                                          hover:text-[#0d4c8f] dark:hover:text-white
-                                          hover:bg-blue-50 dark:hover:bg-slate-800
+                                          text-xs font-medium
                                           transition-all duration-150
-                                          {{ request()->url() === $sub['href'] ? 'text-[#0d4c8f] bg-blue-50 dark:bg-slate-800 dark:text-white' : '' }}">
+                                          {{ request()->url() === $sub['href']
+                                              ? 'text-[#0d4c8f] bg-blue-50 dark:bg-slate-800 dark:text-white'
+                                              : 'text-slate-500 dark:text-slate-400 hover:text-[#0d4c8f] dark:hover:text-white hover:bg-blue-50 dark:hover:bg-slate-800' }}">
                                     {{ $sub['label'] }}
                                 </a>
                             @endforeach
@@ -200,52 +207,9 @@
 
         </nav>
 
-        
-
     </div>
 
 </aside>
-  
-  <!-- Sidebar
- <aside id="sidebar" class="sidebar-transition fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-white lg:static lg:translate-x-0 flex │    
-│    flex-col justify-between"> 
-            <div class="">
-                 Logo --
-                <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-slate-950">
-                    <div class="flex items-center gap-2">
-                   <img src="{{ asset('img/download.jpg') }}" class="h-10 w-10 rounded-full object-cover">                        
-                        <div class="flex flex-col leading-tight">
-                            <span id="logo-text" class="text-xl font-bold text-white tracking-tight font-poppins">MMSC</span>
-                            <span id="logo-text-sub" class="text-xs text-white/70 font-medium">Admin</span>
-                        </div>
-                    </div>
-                </div>
 
-                 Nav bar content --
-                <nav class="space-y-1 px-3 py-6"> 
-                    @php 
-                        $navItems = [
-                            'Dashboard'       => 'boxicons:dashboard-filled',
-                            'Admission'       => 'material-symbols:other-admission',
-                            'Enrollment'      => 'lets-icons:user-fill-add',
-                            'Student Records' => 'ph:folders-fill',
-                            'Clearance'       => 'tdesign:task-checked-filled',
-                            'Academics'       => 'mdi:books',
-                            'Classes'         => 'icon-park-solid:bell-ring',
-                            'Schedule'        => 'uis:schedule',
-                            'Teachers'        => 'fa6-solid:user-tie',
-                            'Announcements'   => 'mdi:announcement',
-                            'Reports'         => 'mage:file-2-fill',
-                            'Settings'        => 'material-symbols:settings',
-                        ];
-                    @endphp
-                    @foreach ($navItems as $label => $icon)
-                        <a href="#" class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all @if($label === 'Dashboard') bg-brand-50 dark:bg-slate-800 @endif" title="{{ $label }}">
-                            <iconify-icon icon="{{ $icon }}" width="20" stroke-width="1.5"></iconify-icon>
-                            <span class="nav-text">{{ $label }}</span>
-                        </a>
-                    @endforeach
-                </nav>
-            </div>
-
-        </aside> -->
+{{-- ── Alpine.js (required for dropdowns) ── --}}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

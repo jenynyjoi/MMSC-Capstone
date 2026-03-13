@@ -1,71 +1,187 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdmin\SuperAdminController;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Teacher\TeacherController;
 use App\Http\Controllers\Student\StudentController;
 use App\Http\Controllers\Parent\ParentController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
+// ── Public ──
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// ── Dashboard Redirect ──
+Route::get('/login', function () {
+    $user = auth()->user();
 
-Route::middleware(['auth', 'role:super_admin'])->group(function () {
-    Route::get('/superadmin/dashboard', [SuperAdminController::class, 'index'])->name('superadmin.dashboard');
-});
+    if ($user->hasRole('super_admin')) {
+        return redirect()->route('superadmin.dashboard');
+    }
+    if ($user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+    if ($user->hasRole('teacher')) {
+        return redirect()->route('teacher.dashboard');
+    }
+    if ($user->hasRole('student')) {
+        return redirect()->route('student.dashboard');
+    }
+    if ($user->hasRole('parent')) {
+        return redirect()->route('parent.dashboard');
+    }
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
-    Route::get('/admin/admission', [AdminController::class, 'admission'])->name('admin.admission');
-    Route::get('/admin/enrollment', [AdminController::class, 'enrollment'])->name('admin.enrollment');
-    Route::get('/admin/student-records', [AdminController::class, 'studentRecords'])->name('admin.student-records.index');
-    Route::get('/admin/student-records/documents', [AdminController::class, 'studentDocuments'])->name('admin.student-records.documents');
-    Route::get('/admin/clearance', [AdminController::class, 'clearance'])->name('admin.clearance');
-    Route::get('/admin/academics/subjects', [AdminController::class, 'subjects'])->name('admin.academics.subjects');
-    Route::get('/admin/academics/curriculum', [AdminController::class, 'curriculum'])->name('admin.academics.curriculum');
-    Route::get('/admin/classes', [AdminController::class, 'classes'])->name('admin.classes');
-    Route::get('/admin/schedule', [AdminController::class, 'schedule'])->name('admin.schedule');
-    Route::get('/admin/teachers', [AdminController::class, 'teachers'])->name('admin.teachers');
-    Route::get('/admin/announcements', [AdminController::class, 'announcements'])->name('admin.announcements');
-    Route::get('/admin/reports/summary', [AdminController::class, 'reportsSummary'])->name('admin.reports.summary');
-    Route::get('/admin/reports/analytics', [AdminController::class, 'reportsAnalytics'])->name('admin.reports.analytics');
-    Route::get('/admin/settings/general', [AdminController::class, 'settingsGeneral'])->name('admin.settings.general');
-    Route::get('/admin/settings/preferences', [AdminController::class, 'settingsPreferences'])->name('admin.settings.preferences');
-});
+    return redirect('/');
+})->middleware(['auth'])->name('dashboard');
 
-Route::middleware(['auth', 'role:teacher'])->group(function () {
-    Route::get('/teacher/dashboard', [TeacherController::class, 'index'])->name('teacher.dashboard');
-});
+// ── Super Admin ──
+Route::middleware(['auth', 'role:super_admin'])
+    ->prefix('superadmin')
+    ->name('superadmin.')
+    ->group(function () {
+        Route::get('/dashboard', [SuperAdminController::class, 'index'])->name('dashboard');
+    });
 
-Route::middleware(['auth', 'role:student'])->group(function () {
-    Route::get('/student/dashboard', [StudentController::class, 'index'])->name('student.dashboard');
-});
+// ── Admin ──
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-Route::middleware(['auth', 'role:parent'])->group(function () {
-    Route::get('/parent/dashboard', [ParentController::class, 'index'])->name('parent.dashboard');
-});
+        // Dashboard
+        Route::get('/dashboard',   [AdminController::class, 'index'])->name('dashboard');
 
+        // Admission
+        Route::get('/admission',   [AdminController::class, 'admission'])->name('admission');
+
+        // Enrollment
+        Route::get('/enrollment',  [AdminController::class, 'enrollment'])->name('enrollment');
+
+        // Student Records
+        Route::get('/student-records',           [AdminController::class, 'studentRecords'])->name('student-records.index');
+        Route::get('/student-records/documents', [AdminController::class, 'studentDocuments'])->name('student-records.documents');
+
+        // Clearance
+        Route::get('/clearance',   [AdminController::class, 'clearance'])->name('clearance');
+
+        // Academics
+        Route::get('/academics/subjects',   [AdminController::class, 'subjects'])->name('academics.subjects');
+        Route::get('/academics/curriculum', [AdminController::class, 'curriculum'])->name('academics.curriculum');
+
+        // Classes
+        Route::get('/classes',     [AdminController::class, 'classes'])->name('classes');
+
+        // Schedule
+        Route::get('/schedule',    [AdminController::class, 'schedule'])->name('schedule');
+
+        // Teachers
+        Route::get('/teachers',    [AdminController::class, 'teachers'])->name('teachers');
+
+        // Announcements
+        Route::get('/announcements', [AdminController::class, 'announcements'])->name('announcements');
+
+        // Reports
+        Route::get('/reports/summary',   [AdminController::class, 'reportsSummary'])->name('reports.summary');
+        Route::get('/reports/analytics', [AdminController::class, 'reportsAnalytics'])->name('reports.analytics');
+
+        // Settings
+        Route::get('/settings/general',     [AdminController::class, 'settingsGeneral'])->name('settings.general');
+        Route::get('/settings/preferences', [AdminController::class, 'settingsPreferences'])->name('settings.preferences');
+    });
+
+// ── Teacher ──
+Route::middleware(['auth', 'role:teacher'])
+    ->prefix('teacher')
+    ->name('teacher.')
+    ->group(function () {
+        Route::get('/dashboard', [TeacherController::class, 'index'])->name('dashboard');
+    });
+
+// ── Student ──
+Route::middleware(['auth', 'role:student'])
+    ->prefix('student')
+    ->name('student.')
+    ->group(function () {
+        Route::get('/dashboard', [StudentController::class, 'index'])->name('dashboard');
+    });
+
+// ── Parent ──
+Route::middleware(['auth', 'role:parent'])
+    ->prefix('parent')
+    ->name('parent.')
+    ->group(function () {
+        Route::get('/dashboard', [ParentController::class, 'index'])->name('dashboard');
+    });
+
+// ── Profile ──
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// ── Auth Routes ──
 require __DIR__.'/auth.php';
+
+
+// use Illuminate\Support\Facades\Route;
+// use App\Http\Controllers\Admin\AdminController;
+// use App\Http\Controllers\SuperAdmin\SuperAdminController;
+// use App\Http\Controllers\Teacher\TeacherController;
+// use App\Http\Controllers\Student\StudentController;
+// use App\Http\Controllers\Parent\ParentController;
+
+// // ── Public ──
+// Route::get('/', function () {
+//     return view('welcome');
+// })->name('welcome');
+
+// // ── Super Admin ──
+// Route::middleware(['auth', 'role:super_admin'])
+//     ->prefix('superadmin')
+//     ->name('superadmin.')
+//     ->group(function () {
+//         Route::get('/dashboard', [SuperAdminController::class, 'index'])->name('dashboard');
+//         Route::get('/users', [SuperAdminController::class, 'users'])->name('users');
+//         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
+//     });
+
+// // ── Admin ──
+// Route::middleware(['auth', 'role:admin'])
+//     ->prefix('admin')
+//     ->name('admin.')
+//     ->group(function () {
+//         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+//         Route::get('/enrollment', [AdminController::class, 'enrollment'])->name('enrollment');
+//         Route::get('/students', [AdminController::class, 'students'])->name('students');
+//     });
+
+// // ── Teacher ──
+// Route::middleware(['auth', 'role:teacher'])
+//     ->prefix('teacher')
+//     ->name('teacher.')
+//     ->group(function () {
+//         Route::get('/dashboard', [TeacherController::class, 'index'])->name('dashboard');
+//     });
+
+// // ── Student ──
+// Route::middleware(['auth', 'role:student'])
+//     ->prefix('student')
+//     ->name('student.')
+//     ->group(function () {
+//         Route::get('/dashboard', [StudentController::class, 'index'])->name('dashboard');
+//     });
+
+// // ── Parent ──
+// Route::middleware(['auth', 'role:parent'])
+//     ->prefix('parent')
+//     ->name('parent.')
+//     ->group(function () {
+//         Route::get('/dashboard', [ParentController::class, 'index'])->name('dashboard');
+//     });
+
+// ── Breeze Auth Routes (login, logout, forgot password etc.) ──
+// require __DIR__.'/auth.php';
