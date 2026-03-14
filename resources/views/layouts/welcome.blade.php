@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ dark: false, mobileMenu: false }" :class="dark ? 'dark' : ''">
+<html lang="en" x-data="{ 
+    dark: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches), 
+    mobileMenu: false 
+}" x-init="$watch('dark', val => localStorage.setItem('theme', val ? 'dark' : 'light'))" :class="dark ? 'dark' : ''">
 
 <head>
     <meta charset="UTF-8" />

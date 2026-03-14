@@ -15,7 +15,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        
         .sidebar-transition {
             transition: width 0.3s ease, transform 0.3s ease;
         }
@@ -38,14 +37,6 @@
             justify-content: center;
             padding-left: 0;
             padding-right: 0;
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
         }
     
         @keyframes slideIn {
@@ -78,7 +69,8 @@
             {{-- Top Navigation --}}
             <header class="shrink-0 sticky top-0 z-30 flex h-16 items-center justify-between
                            border-b border-white/10 px-4 lg:px-8
-                           bg-[#0d4c8f] dark:bg-[#0a3a6e]">
+                           bg-[#0d4c8f] dark:bg-[#0b1224]">
+                           
 
                 <div class="flex items-center gap-4">
 
@@ -98,9 +90,9 @@
 
                     {{-- Search Bar --}}
                     <div class="hidden md:flex items-center gap-2 rounded-lg bg-white/20
-                                px-3 py-1.5 ring-1 ring-white/30 focus-within:ring-white/50">
+                                px-3 py-1.3 ring-1 ring-white/30 focus-within:ring-white/50">
                         <iconify-icon icon="solar:magnifer-linear" class="text-white/70"></iconify-icon>
-                        <input type="text" placeholder="Search analytics..."
+                        <input type="text" placeholder="Search..."
                             class="w-64 bg-transparent text-sm text-white
                                    placeholder:text-white/60 focus:outline-none">
                         <div class="flex items-center gap-1 rounded border border-white/30 px-1.5 py-0.5">

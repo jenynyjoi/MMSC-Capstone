@@ -10,9 +10,9 @@ import laravel from 'laravel-vite-plugin';
 
         // ---- Background slideshow ----
         const images = [
-            "{{ asset('images/landing bg.png') }}",
-            "{{ asset('images/schoolBG.png') }}",
-            "{{ asset('images/bg messiah.jpg') }}"
+            "{{ asset('public/images/schoolBG.png') }}",
+            "{{ asset('public/images/full-logo.jpg') }}",
+            "{{ asset('public/images/messiah-logo.png') }}"
         ];
 
         const gradient = `linear-gradient(

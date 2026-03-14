@@ -1,10 +1,10 @@
 <!-- Sidebar -->
-<aside id="sidebar" class="sidebar-transition fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-white lg:static lg:translate-x-0 flex flex-col justify-between dark:bg-slate-900">
+<aside id="sidebar" class="sidebar-transition fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-white lg:static lg:translate-x-0 flex flex-col justify-between dark:bg-[#0b1224]">
 
     <div class="flex flex-col h-full">
 
         <!-- ── Logo ── -->
-        <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-slate-950 shrink-0">
+        <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-[#0b1224]">
             <div class="flex items-center gap-2">
                 <img src="{{ asset('img/download.jpg') }}" class="h-10 w-10 rounded-full object-cover">
                 <div id="logo-text" class="flex flex-col leading-tight">
