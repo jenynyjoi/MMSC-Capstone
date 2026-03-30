@@ -1,9 +1,7 @@
 
-
-
 {{-- resources/views/welcome.blade.php --}}
 
-@extends('layout.welcome')
+@extends('layouts.welcome')
 
 @section('title', 'My Messiah School of Cavite')
 
@@ -11,7 +9,7 @@
     <!-- ===================== HERO / LANDING ===================== -->
     <section id="landingPage"
         class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 pt-16"
-        style="background-image: linear-gradient(to bottom, rgba(13,96,184,0.9) 0%, rgba(26,94,158,0.75) 25%, rgba(48,125,183,0.6) 50%, rgba(141,204,238,0.75) 75%, rgba(233,244,250,0.95) 100%), url('{{ asset('public/images/schoolBG.png') }}'); background-size: cover; background-position: center;">
+        style="background-image: linear-gradient(to bottom, rgba(13,96,184,0.9) 0%, rgba(26,94,158,0.75) 25%, rgba(48,125,183,0.6) 50%, rgba(141,204,238,0.75) 75%, rgba(233,244,250,0.95) 100%), url('{{ asset('public/images/landing bg.png') }}'); background-size: cover; background-position: center;">
 
         <div class="max-w-3xl mx-auto">
             <p class="text-blue-200 text-sm font-semibold uppercase tracking-widest mb-4 animate-pulse">Welcome to MMSC</p>
@@ -26,7 +24,7 @@
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#"
+                <a href="{{ route('online.registration.step1') }}"
                     class="inline-flex items-center justify-center px-7 py-3.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-lg shadow-blue-600/40 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all duration-200">
                     Apply Now
                     <i class="ri-arrow-right-line ml-2"></i>
@@ -49,7 +47,7 @@
 
     <!-- ===================== FULL PHOTO STRIP ===================== -->
     <section class="w-full h-56 sm:h-72 lg:h-96 overflow-hidden">
-        <img src="{{ asset('public/images/schoolBG.png') }}" alt="Messiah School" class="w-full h-full object-cover">
+        <img src="{{ asset('public/images/bg messiah.jpg') }}" alt="Messiah School" class="w-full h-full object-cover">
     </section>
 
 

@@ -17,24 +17,23 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- ✅ Alpine.js MUST be in <head> with defer -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @vite(['resources/css/welcome.css', 'resources/js/welcome.js'])
-    
 
-
-    @stack('styles')   {{-- ← for page-specific CSS --}}
+    @stack('styles')
 </head>
 
 <body>
-    <!-- <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 antialiased"> -->
 
+    @include('partials.navbar')
 
-    @include('partials.navbar')   {{--  navbar --}}
+    @yield('content')
 
-    @yield('content')          {{--  page content  --}}
+    @include('partials.footer')
 
-    @include('partials.footer')   {{-- footer --}}
-
-    @stack('scripts')  {{-- page-specific JS --}}
+    @stack('scripts')  
 
 </body>
 </html>

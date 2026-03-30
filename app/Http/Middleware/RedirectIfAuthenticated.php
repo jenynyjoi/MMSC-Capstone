@@ -12,8 +12,7 @@ class RedirectIfAuthenticated
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * If already logged in, redirect to their role dashboard instead of login page.
      */
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
@@ -21,7 +20,25 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                $user = Auth::guard($guard)->user();
+
+                if ($user->hasRole('super_admin')) {
+                    return redirect()->route('superadmin.dashboard');
+                }
+                if ($user->hasRole('admin')) {
+                    return redirect()->route('admin.dashboard');
+                }
+                if ($user->hasRole('teacher')) {
+                    return redirect()->route('teacher.dashboard');
+                }
+                if ($user->hasRole('student')) {
+                    return redirect()->route('student.dashboard');
+                }
+                if ($user->hasRole('parent')) {
+                    return redirect()->route('parent.dashboard');
+                }
+
+                return redirect('/');
             }
         }
 
