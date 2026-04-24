@@ -7,24 +7,31 @@
 <div class="flex-1 overflow-y-auto lg:p-8 dark:bg-dark-bg bg-slate-50/50 p-4">
 
     {{-- ── Page Header ── --}}
-    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">School Calendar</h1>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage School Academic Calendar</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Current School Year:</span>
-            <div class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 shadow-sm">
+    <x-admin.page-header title="School Calendar" subtitle="Manage School Academic Calendar">
+        <div class="flex items-center gap-2 mt-2 sm:mt-0">
+            <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">School Year:</span>
+            @php $allSchoolYears = \App\Models\SchoolYear::orderByDesc('start_date')->get(); @endphp
+            @if($allSchoolYears->count())
+            <form method="GET" action="{{ route('admin.school-calendar.index') }}">
+                <select name="school_year" onchange="this.form.submit()"
+                    class="rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    @foreach($allSchoolYears as $sy)
+                    <option value="{{ $sy->name }}" {{ $sy->name === $schoolYear ? 'selected' : '' }}>
+                        SY {{ $sy->name }}{{ $sy->status === 'active' ? ' ★' : '' }}
+                    </option>
+                    @endforeach
+                </select>
+            </form>
+            @else
+            <div class="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 shadow-sm">
                 <span class="text-sm font-semibold text-slate-700 dark:text-white">SY {{ $schoolYear }}</span>
-                <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <iconify-icon icon="solar:menu-dots-bold" width="14"></iconify-icon>
-                </button>
             </div>
+            @endif
         </div>
-    </div>
+    </x-admin.page-header>
 
     {{-- ── Success / Error Toast ── --}}
-    <div id="toast" class="hidden fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-3.5 shadow-xl text-sm font-medium transition-all">
+    <div id="toast" style="display:none" class="fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-3.5 shadow-xl text-sm font-medium transition-all">
         <iconify-icon id="toast-icon" width="18"></iconify-icon>
         <span id="toast-msg"></span>
     </div>
@@ -33,16 +40,23 @@
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-card mb-6">
 
         {{-- Card Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-dark-border">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-slate-100 dark:border-dark-border">
             <div class="flex items-center gap-2">
                 <iconify-icon icon="solar:calendar-bold" width="18" class="text-slate-600 dark:text-slate-300"></iconify-icon>
                 <h3 class="text-base font-semibold text-slate-900 dark:text-white">School Academic Calendar</h3>
             </div>
-            <button id="btn-add-event"
-                class="flex items-center gap-2 rounded-lg bg-[#0d4c8f] hover:bg-blue-800 text-white px-4 py-2 text-sm font-medium transition-colors shadow-sm">
-                <iconify-icon icon="solar:add-circle-linear" width="16"></iconify-icon>
-                Add Event
-            </button>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.school-year-config.index') }}"
+                    class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 px-4 py-2 text-sm font-medium transition-colors shadow-sm">
+                    <iconify-icon icon="solar:settings-linear" width="16"></iconify-icon>
+                    Configure School Year
+                </a>
+                <button id="btn-add-event"
+                    class="flex items-center gap-2 rounded-lg bg-[#0d4c8f] hover:bg-blue-800 text-white px-4 py-2 text-sm font-medium transition-colors shadow-sm">
+                    <iconify-icon icon="solar:add-circle-linear" width="16"></iconify-icon>
+                    Add Event
+                </button>
+            </div>
         </div>
 
         {{-- Month Jump --}}
@@ -97,10 +111,10 @@
         </div>
 
         {{-- Day-of-week headers --}}
-        <div class="px-6">
+        <div class="px-4">
             <div class="grid grid-cols-7 border-t border-l border-slate-200 dark:border-dark-border">
                 @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $day)
-                <div class="border-r border-b border-slate-200 dark:border-dark-border py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">{{ $day }}</div>
+                <div class="border-r border-b border-slate-200 dark:border-dark-border py-2.5 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{{ $day }}</div>
                 @endforeach
             </div>
             {{-- Calendar Grid --}}
@@ -146,28 +160,30 @@
         <div class="overflow-x-auto px-6 py-4">
             <table class="w-full text-sm text-left">
                 <thead>
-                    <tr class="border-b border-slate-100 dark:border-dark-border text-xs font-medium text-slate-500 dark:text-slate-400">
-                        <th class="pb-3 pr-6">Date</th>
-                        <th class="pb-3 pr-6">Day</th>
-                        <th class="pb-3 pr-6">Day Type</th>
-                        <th class="pb-3">Event</th>
+                    <tr class="border-b border-slate-100 dark:border-dark-border text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        <th class="pb-3 pr-6 whitespace-nowrap">Date</th>
+                        <th class="pb-3 pr-6 whitespace-nowrap">Day</th>
+                        <th class="pb-3 pr-6 whitespace-nowrap">Day Type</th>
+                        <th class="pb-3 pr-6 whitespace-nowrap">Event Title</th>
+                        <th class="pb-3 whitespace-nowrap">Description</th>
                     </tr>
                 </thead>
                 <tbody id="upcoming-tbody" class="divide-y divide-slate-100 dark:divide-dark-border">
                     @forelse($upcoming as $ev)
                     <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td class="py-3 pr-6 text-slate-700 dark:text-slate-300">{{ $ev->date->format('M j') }}</td>
-                        <td class="py-3 pr-6 text-slate-500 dark:text-slate-400">{{ $ev->date->format('l') }}</td>
-                        <td class="py-3 pr-6">
-                            <span class="rounded-full px-2.5 py-0.5 text-xs font-medium {{ $ev->badgeClass() }}">
+                        <td class="py-3.5 pr-6 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">{{ $ev->date->format('M j, Y') }}</td>
+                        <td class="py-3.5 pr-6 text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ $ev->date->format('l') }}</td>
+                        <td class="py-3.5 pr-6 whitespace-nowrap">
+                            <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $ev->badgeClass() }}">
                                 {{ $ev->dayTypeLabel() }}
                             </span>
                         </td>
-                        <td class="py-3 text-slate-700 dark:text-slate-300">{{ $ev->event_title ?? '—' }}</td>
+                        <td class="py-3.5 pr-6 font-medium text-slate-800 dark:text-slate-200">{{ $ev->event_title ?? '—' }}</td>
+                        <td class="py-3.5 text-slate-500 dark:text-slate-400 max-w-xs">{{ $ev->description ?? '—' }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="py-6 text-center text-sm text-slate-400 dark:text-slate-500">No upcoming events this month.</td>
+                        <td colspan="5" class="py-10 text-center text-sm text-slate-400 dark:text-slate-500">No upcoming events this month.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -181,15 +197,15 @@
 {{-- ══════════════════════════════════════════════════════════
      ADD / EDIT EVENT MODAL
      ══════════════════════════════════════════════════════════ --}}
-<div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+<div id="event-modal" style="display:none" class="fixed inset-0 z-50 flex items-center justify-center p-4">
     {{-- Backdrop --}}
     <div id="modal-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
     {{-- Panel --}}
-    <div class="relative z-10 w-full max-w-lg rounded-2xl bg-white dark:bg-dark-card shadow-2xl border border-slate-200 dark:border-dark-border overflow-hidden">
+    <div class="relative z-10 w-full max-w-lg rounded-2xl bg-white dark:bg-dark-card shadow-2xl border border-slate-200 dark:border-dark-border overflow-hidden flex flex-col max-h-[92vh]">
 
         {{-- Modal Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5">
+        <div class="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5">
             <div>
                 <h3 id="modal-title" class="text-base font-semibold text-slate-900 dark:text-white">Edit Day</h3>
                 <p id="modal-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
@@ -199,15 +215,24 @@
             </button>
         </div>
 
-        {{-- Modal Body --}}
-        <form id="event-form" class="px-6 py-5 space-y-4">
+        {{-- Validation Errors --}}
+        <div id="modal-errors" style="display:none" class="flex-shrink-0 mx-6 mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+            <p class="text-xs font-semibold text-red-600 mb-1">Please fix the following errors:</p>
+            <ul id="modal-error-list" class="list-disc list-inside text-xs text-red-500 space-y-0.5"></ul>
+        </div>
+
+        {{-- Modal Body (scrollable) --}}
+        <form id="event-form" class="flex flex-col flex-1 overflow-hidden">
             @csrf
             <input type="hidden" id="form-event-id" name="event_id">
             <input type="hidden" id="form-date"     name="date">
             <input type="hidden" id="form-school-year" name="school_year" value="{{ $schoolYear }}">
 
+            {{-- Scrollable Fields --}}
+            <div class="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+
             {{-- If Add mode: date picker --}}
-            <div id="date-picker-row" class="hidden">
+            <div id="date-picker-row" style="display:none">
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Select Date *</label>
                 <input type="date" id="input-date-picker" name="_date_picker"
                     class="w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-3 py-2 text-sm text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -279,10 +304,13 @@
                 </div>
             </div>
 
-            {{-- Actions --}}
-            <div class="flex items-center justify-between pt-2">
+            </div>{{-- end scrollable fields --}}
+
+            {{-- Actions Footer (sticky, always visible) --}}
+            <div class="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-dark-border bg-white dark:bg-dark-card">
                 <button type="button" id="btn-delete-event"
-                    class="hidden flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors">
+                    style="display:none"
+                    class="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors">
                     <iconify-icon icon="solar:trash-bin-trash-linear" width="15"></iconify-icon>
                     Delete Event
                 </button>
@@ -333,15 +361,13 @@ function dateStr(y, m, d) {
 function badgeHtml(ds) {
     const ev = calEvents[ds];
     if (ev) {
-        const lines = (ev.label || '').split('\n');
-        return `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 cursor-pointer ${ev.badge_class}" onclick="openEditModal('${ds}')">`
-            + lines.map(l => `<div>${l}</div>`).join('')
-            + `</div>`;
+        const title = ev.label || '';
+        const desc  = ev.description ? `<div class="mt-0.5 opacity-75 truncate">${ev.description}</div>` : '';
+        return `<div class="rounded-md px-2 py-1 text-[11px] font-semibold leading-snug mb-0.5 cursor-pointer ${ev.badge_class}" onclick="openEditModal('${ds}')">
+                    <div class="truncate">${title}</div>${desc}
+                </div>`;
     }
-    return ''; // no event stored
-}
-function regularBadge(ds) {
-    return `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 bg-green-100 text-green-700 cursor-pointer" onclick="openEditModal('${ds}')"><div>Regular Class</div></div>`;
+    return '';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -378,18 +404,17 @@ function renderMonth() {
         const isToday  = isCur && day===today.getDate() && m===today.getMonth() && y===today.getFullYear();
         const weekend  = col===0||col===6;
         const hasSaved = !!calEvents[ds];
-        const isReg    = isCur && !weekend && !hasSaved;
+
         const bg       = weekend && isCur ? 'bg-slate-50 dark:bg-white/[0.02]' : '';
 
-        html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[80px] p-1.5 ${bg}" data-date="${isCur ? ds : ''}">`;
-        html += `<div class="flex justify-end mb-1">
-                    <span class="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full
-                        ${isToday ? 'bg-[#0d4c8f] text-white' : isCur ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer' : 'text-slate-300 dark:text-slate-600'}"
+        html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[110px] p-2 ${bg}" data-date="${isCur ? ds : ''}">`;
+        html += `<div class="flex justify-end mb-1.5">
+                    <span class="text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full
+                        ${isToday ? 'bg-[#0d4c8f] text-white shadow-sm' : isCur ? 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer' : 'text-slate-300 dark:text-slate-600'}"
                         ${isCur ? `onclick="openEditModal('${ds}')"` : ''}>
                         ${day}
                     </span>
                  </div>`;
-        if (isReg)    html += regularBadge(ds);
         if (hasSaved) html += badgeHtml(ds);
         html += `</div>`;
     }
@@ -414,9 +439,8 @@ function renderWeek() {
         const isToday = dd.toDateString()===today.toDateString();
         const hasSaved= !!calEvents[ds];
         const bg      = weekend ? 'bg-slate-50 dark:bg-white/[0.02]' : '';
-        html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[120px] p-2 ${bg}">`;
-        html += `<div class="flex justify-center mb-2"><span class="text-xs font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday?'bg-[#0d4c8f] text-white':'text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100'}" onclick="openEditModal('${ds}')">${dd.getDate()}</span></div>`;
-        if (!weekend && !hasSaved) html += regularBadge(ds);
+        html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[140px] p-2.5 ${bg}">`;
+        html += `<div class="flex justify-center mb-2"><span class="text-sm font-bold w-9 h-9 flex items-center justify-center rounded-full ${isToday?'bg-[#0d4c8f] text-white shadow-sm':'text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10'}" onclick="openEditModal('${ds}')">${dd.getDate()}</span></div>`;
         if (hasSaved) html += badgeHtml(ds);
         html += `</div>`;
     });
@@ -518,8 +542,8 @@ function openAddModal(prefilledDate = null) {
     resetModal();
     document.getElementById('modal-title').textContent    = 'Add Event';
     document.getElementById('modal-subtitle').textContent = prefilledDate ? formatDateLabel(prefilledDate) : 'Select a date below';
-    document.getElementById('date-picker-row').classList.remove('hidden');
-    document.getElementById('btn-delete-event').classList.add('hidden');
+    document.getElementById('date-picker-row').style.display = 'block';
+    document.getElementById('btn-delete-event').style.display = 'none';
     if (prefilledDate) {
         document.getElementById('input-date-picker').value = prefilledDate;
         document.getElementById('form-date').value         = prefilledDate;
@@ -543,7 +567,7 @@ async function openEditModal(ds) {
             const ev = await r.json();
             fillModalFromEvent(ev);
             document.getElementById('form-event-id').value = ev.id;
-            document.getElementById('btn-delete-event').classList.remove('hidden');
+            document.getElementById('btn-delete-event').style.display = 'flex';
         } catch(e) { fillModalFromSaved(saved); }
     } else {
         // New / unsaved — just open blank with date pre-filled
@@ -566,10 +590,16 @@ function resetModal() {
     document.getElementById('event-form').reset();
     document.getElementById('form-event-id').value = '';
     document.getElementById('form-date').value     = '';
-    document.getElementById('date-picker-row').classList.add('hidden');
+    document.getElementById('date-picker-row').style.display        = 'none';
+    document.getElementById('btn-delete-event').style.display       = 'none';
+    document.getElementById('modal-errors').style.display           = 'none';
+    document.getElementById('modal-error-list').innerHTML           = '';
 }
-function showModal()  { document.getElementById('event-modal').classList.remove('hidden'); }
-function closeModal() { document.getElementById('event-modal').classList.add('hidden'); }
+function showModal()  { document.getElementById('event-modal').style.display = 'flex'; }
+function closeModal() {
+    document.getElementById('event-modal').style.display = 'none';
+    document.getElementById('modal-errors').style.display = 'none';
+}
 
 function formatDateLabel(ds) {
     if (!ds) return '';
@@ -588,7 +618,7 @@ document.getElementById('event-form').addEventListener('submit', async function(
 
     // If Add mode, use date picker value
     const pickerRow = document.getElementById('date-picker-row');
-    if (!pickerRow.classList.contains('hidden')) {
+    if (pickerRow.style.display !== 'none') {
         date = document.getElementById('input-date-picker').value;
         if (!date) { showToast('Please select a date.', 'error'); return; }
         document.getElementById('form-date').value = date;
@@ -626,20 +656,30 @@ document.getElementById('event-form').addEventListener('submit', async function(
         });
         const data = await r.json();
         if (data.success) {
-            // Update local store
-            calEvents[date] = {
-                id:          data.event.id,
-                day_type:    data.event.day_type,
-                event_title: data.event.event_title,
-                badge_class: data.event.badge_class,
-                label:       data.event.label,
-            };
-            renderCal();
-            refreshUpcoming();
+            // Update local store then close — always close first
             closeModal();
-            showToast(data.message, 'success');
+            try {
+                calEvents[date] = {
+                    id:          data.event.id,
+                    day_type:    data.event.day_type,
+                    event_title: data.event.event_title,
+                    badge_class: data.event.badge_class,
+                    label:       data.event.label,
+                };
+                renderCal();
+                refreshUpcoming();
+            } catch(_) {}
+            showToast(data.message || 'Event saved.', 'success');
+        } else if (r.status === 422 && data.errors) {
+            // Show validation errors inside modal
+            const errBox  = document.getElementById('modal-errors');
+            const errList = document.getElementById('modal-error-list');
+            errList.innerHTML = Object.values(data.errors).flat()
+                .map(e => `<li>${e}</li>`).join('');
+            errBox.style.display = 'block';
+            errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
-            showToast('Something went wrong.', 'error');
+            showToast(data.message || 'Something went wrong.', 'error');
         }
     } catch(err) {
         showToast('Network error. Please try again.', 'error');
@@ -663,10 +703,12 @@ document.getElementById('btn-delete-event').addEventListener('click', async func
     });
     const data = await r.json();
     if (data.success) {
-        delete calEvents[date];
-        renderCal();
-        refreshUpcoming();
         closeModal();
+        try {
+            delete calEvents[date];
+            renderCal();
+            refreshUpcoming();
+        } catch(_) {}
         showToast('Event deleted.', 'success');
     }
 });
@@ -747,8 +789,7 @@ document.getElementById('input-date-picker').addEventListener('change', function
 // DOWNLOAD PDF
 // ════════════════════════════════════════════════════════════
 document.getElementById('btn-download-pdf').addEventListener('click', function() {
-    const y = calCurrent.getFullYear(), m = calCurrent.getMonth()+1;
-    window.open(`${ROUTES.downloadPdf}?school_year=${SCHOOL_YEAR}&month=${m}&year=${y}`, '_blank');
+    window.open(`${ROUTES.downloadPdf}?school_year=${SCHOOL_YEAR}`, '_blank');
 });
 
 // ════════════════════════════════════════════════════════════
@@ -785,8 +826,8 @@ function showToast(msg, type='success') {
         toast.className = 'fixed top-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-3.5 shadow-xl text-sm font-medium transition-all bg-red-500 text-white';
         icon.setAttribute('icon', 'solar:close-circle-bold');
     }
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
+    toast.style.display = 'flex';
+    setTimeout(() => { toast.style.display = 'none'; }, 3500);
 }
 
 // ════════════════════════════════════════════════════════════

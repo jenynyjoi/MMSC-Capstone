@@ -49,7 +49,6 @@ return new class extends Migration
             $table->text('guardian_address')->nullable();
             $table->string('guardian_occupation', 100)->nullable();
             $table->string('guardian_email', 255)->nullable();
-            $table->string('emergency_contact_number', 20)->nullable();
 
             // ── ENROLLMENT INFO (set per year) ──
             $table->string('school_year', 20)->nullable();

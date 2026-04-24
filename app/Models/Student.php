@@ -22,12 +22,12 @@ class Student extends Model
         'mother_name', 'mother_maiden_name', 'mother_occupation', 'mother_contact',
         'guardian_name', 'guardian_relationship', 'guardian_contact',
         'guardian_address', 'guardian_occupation', 'guardian_email',
-        'emergency_contact_number',
         'school_year', 'applied_level', 'grade_level',
         'section_id', 'section_name', 'track', 'strand',
         'admission_type', 'student_category',
         'enrollment_date', 'enrolled_at',
-        'student_status', 'academic_status', 'clearance_status', 'enrollment_status',
+        'student_status', 'academic_status', 'clearance_status', 'behavioral_clearance', 'behavioral_cleared_by', 'property_clearance', 'enrollment_status',
+        'withdrawal_reason', 'withdrawal_date', 'withdrawal_details',
         'user_id', 'portal_account_created', 'account_created_at',
         'password_changed', 'last_login',
     ];
@@ -42,12 +42,37 @@ class Student extends Model
         'password_changed'       => 'boolean',
     ];
 
+    protected static $nameFields = [
+        'first_name', 'middle_name', 'last_name', 'suffix',
+        'father_name', 'mother_name', 'mother_maiden_name', 'guardian_name',
+    ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+        static::saving(function (self $model) {
+            foreach (self::$nameFields as $field) {
+                if (!empty($model->$field)) {
+                    $model->$field = strtoupper($model->$field);
+                }
+            }
+        });
+    }
+
     // ── Generate student ID ──
     public static function generateStudentId(): string
     {
-        $year = date('Y');
-        $count = self::whereYear('created_at', $year)->count() + 1;
-        return $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $year   = date('Y');
+        $prefix = $year . '-';
+
+        // Use the highest existing sequence for this year, not COUNT (COUNT breaks on gaps/deletions).
+        $last = self::where('student_id', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(student_id, \'-\', -1) AS UNSIGNED) DESC')
+            ->value('student_id');
+
+        $seq = $last ? ((int) substr($last, strlen($prefix)) + 1) : 1;
+
+        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
     // ── Generate school email ──
@@ -112,7 +137,6 @@ class Student extends Model
             'guardian_address' => $app->guardian_address,
             'guardian_occupation' => $app->guardian_occupation,
             'guardian_email'   => $app->guardian_email,
-            'emergency_contact_number' => $app->emergency_contact_number,
             'school_year'      => $app->school_year,
             'applied_level'    => $app->applied_level,
             'grade_level'      => $app->incoming_grade_level,
@@ -136,9 +160,51 @@ class Student extends Model
         return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . $this->last_name . ($this->suffix ? ' ' . $this->suffix : ''));
     }
 
-    // ── Relationship to user ──
+    // ── Formatted name: LASTNAME, FIRSTNAME M. ──
+    public function getFormattedNameAttribute(): string
+    {
+        $mi   = $this->middle_name ? ' ' . strtoupper(substr($this->middle_name, 0, 1)) . '.' : '';
+        $last = strtoupper($this->last_name);
+        $first= strtoupper($this->first_name);
+        $sfx  = $this->suffix ? ' ' . strtoupper($this->suffix) : '';
+        return $last . ($sfx ? ' ' . trim($sfx) : '') . ', ' . $first . $mi;
+    }
+
+    // ── Relationships ──────────────────────────────────────
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(StudentEnrollment::class, 'student_id');
+    }
+
+    public function latestEnrollment()
+    {
+        return $this->hasOne(StudentEnrollment::class, 'student_id')->latestOfMany();
+    }
+
+    public function behavioralRecords()
+    {
+        return $this->hasMany(\App\Models\BehavioralRecord::class, 'student_id');
+    }
+
+    public function finance()
+    {
+        return $this->hasOne(\App\Models\StudentFinance::class, 'student_id')->latestOfMany();
+    }
+
+    public function propertyRecord()
+    {
+        return $this->hasOne(\App\Models\StudentPropertyRecord::class, 'student_id')
+            ->where('school_year', $this->school_year);
+    }
+
+    public function libraryRecord()
+    {
+        return $this->hasOne(\App\Models\StudentLibraryRecord::class, 'student_id')
+            ->where('school_year', $this->school_year);
     }
 }

@@ -8,21 +8,14 @@
     <div class="flex-1 overflow-y-auto lg:p-8 dark:bg-dark-bg bg-slate-50/50 p-4">
 
         {{-- ── Page Header ── --}}
-        <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Overview</h1>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Welcome back, here's what's happening today.</p>
-            </div>
-            <div class="flex items-center gap-2 mt-2 sm:mt-0">
-                <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Current school year:</span>
-                <div class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 shadow-sm">
-                    <span class="text-sm font-semibold text-slate-700 dark:text-white">SY 2025–2026</span>
-                    <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                        <iconify-icon icon="solar:menu-dots-bold" width="14"></iconify-icon>
-                    </button>
-                </div>
-            </div>
-        </div>
+        
+        <x-admin.page-header
+            title="Overview"
+            subtitle="Welcome back, here's what's happening today."
+            school-year="{{ $activeSchoolYear }}"
+            :show-menu="true"
+            
+        />
 
         {{-- ── Stats Grid ── --}}
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -36,7 +29,7 @@
                         <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Students</p>
                         <p class="text-xs text-slate-400 dark:text-slate-500">Total Enrolled Students</p>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $totalStudents }}</h3>
                 </div>
             </div>
 
@@ -49,7 +42,7 @@
                         <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Teachers</p>
                         <p class="text-xs text-slate-400 dark:text-slate-500">Total Teachers</p>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $totalTeachers }}</h3>
                 </div>
             </div>
 
@@ -62,7 +55,7 @@
                         <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Parents</p>
                         <p class="text-xs text-slate-400 dark:text-slate-500">Total Parents</p>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $totalParents }}</h3>
                 </div>
             </div>
 
@@ -75,14 +68,14 @@
                         <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Sections</p>
                         <p class="text-xs text-slate-400 dark:text-slate-500">Total Active Sections</p>
                     </div>
-                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">10</h3>
+                    <h3 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{{ $totalSections }}</h3>
                 </div>
             </div>
 
         </div>
 
-        {{-- ── Quick Action & Latest Announcement ── --}}
-        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {{-- ── Quick Action, Latest Announcements & Gender Breakdown ── --}}
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
                 <div class="mb-5 flex items-center gap-3">
@@ -92,10 +85,22 @@
                     <h3 class="text-base font-semibold text-slate-900 dark:text-white">Quick Action</h3>
                 </div>
                 <div class="flex flex-col gap-3">
-                    <button class="w-full rounded-lg border border-blue-400 py-2.5 text-sm font-medium text-blue-500 transition hover:bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/20">Enroll Student</button>
-                    <button class="w-full rounded-lg border border-yellow-400 py-2.5 text-sm font-medium text-yellow-500 transition hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-400 dark:hover:bg-yellow-900/20">Update Clearance</button>
-                    <button class="w-full rounded-lg border border-green-400 py-2.5 text-sm font-medium text-green-600 transition hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20">View Schedules</button>
-                    <button class="w-full rounded-lg border border-red-400 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-900/20">Post Announcement</button>
+                    <a href="{{ route('admin.enrollment.enroll') }}"
+                       class="w-full rounded-lg border border-blue-400 py-2.5 text-sm font-medium text-blue-500 transition hover:bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/20 text-center flex items-center justify-center gap-2">
+                        <iconify-icon icon="solar:user-plus-rounded-linear" width="16"></iconify-icon>Enroll Student
+                    </a>
+                    <a href="{{ route('admin.clearance.summary') }}"
+                       class="w-full rounded-lg border border-yellow-400 py-2.5 text-sm font-medium text-yellow-500 transition hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-400 dark:hover:bg-yellow-900/20 text-center flex items-center justify-center gap-2">
+                        <iconify-icon icon="solar:shield-check-linear" width="16"></iconify-icon>Update Clearance
+                    </a>
+                    <a href="{{ route('admin.schedule.class') }}"
+                       class="w-full rounded-lg border border-green-400 py-2.5 text-sm font-medium text-green-600 transition hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20 text-center flex items-center justify-center gap-2">
+                        <iconify-icon icon="solar:calendar-linear" width="16"></iconify-icon>View Schedules
+                    </a>
+                    <a href="{{ route('admin.announcements') }}"
+                       class="w-full rounded-lg border border-red-400 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50 dark:border-red-500 dark:text-red-400 dark:hover:bg-red-900/20 text-center flex items-center justify-center gap-2">
+                        <iconify-icon icon="solar:bell-linear" width="16"></iconify-icon>Post Announcement
+                    </a>
                 </div>
             </div>
 
@@ -105,46 +110,129 @@
                         <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
                             <iconify-icon icon="solar:document-text-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
                         </div>
-                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Latest Announcement</h3>
+                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Latest Announcements</h3>
                     </div>
-                    <button class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 text-lg font-bold">+</button>
+                    <a href="{{ route('admin.announcements') }}"
+                       class="flex h-8 items-center gap-1.5 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 transition-colors">
+                        View all
+                        <iconify-icon icon="solar:arrow-right-linear" width="12"></iconify-icon>
+                    </a>
                 </div>
+
+                @if($latestAnnouncements->isEmpty())
+                    <div class="flex flex-col items-center justify-center py-8 text-center">
+                        <iconify-icon icon="solar:document-text-linear" width="36" class="text-slate-300 dark:text-slate-600 mb-2"></iconify-icon>
+                        <p class="text-sm text-slate-400 dark:text-slate-500">No announcements yet.</p>
+                        <a href="{{ route('admin.announcements') }}" class="mt-2 text-xs text-blue-500 hover:underline">Post one now</a>
+                    </div>
+                @else
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-dark-border text-xs font-medium text-slate-500 dark:text-slate-400">
                                 <th class="pb-3 pr-4">Title</th>
-                                <th class="pb-3 pr-4">Date</th>
-                                <th class="pb-3 pr-4">Time</th>
-                                <th class="pb-3 pr-4">Sender</th>
+                                <th class="pb-3 pr-4 whitespace-nowrap">Date</th>
+                                <th class="pb-3 pr-4">Posted By</th>
                                 <th class="pb-3 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-dark-border">
-                            @foreach([
-                                ['yellow-400', 'Enrollment Procedures', '19 January, 2026', '4:00 pm', 'Jeneva Ybanez'],
-                                ['red-500',    'Class Suspension',      '23 January, 2026', '4:00 pm', 'Hans Gayon'],
-                                ['green-500',  'Report Approval',       '29 January, 2026', '4:00 pm', 'Dianne Balaoro'],
-                            ] as $a)
+                            @foreach($latestAnnouncements as $ann)
+                            @php
+                                $dot = match($ann->importance) {
+                                    'high'   => 'bg-red-500',
+                                    'medium' => 'bg-yellow-400',
+                                    default  => 'bg-green-500',
+                                };
+                            @endphp
                             <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                 <td class="py-3 pr-4">
                                     <div class="flex items-center gap-2">
-                                        <span class="h-2 w-2 rounded-full bg-{{ $a[0] }} shrink-0"></span>
-                                        <span class="text-slate-700 dark:text-slate-300 text-xs">{{ $a[1] }}</span>
+                                        <span class="h-2 w-2 rounded-full {{ $dot }} shrink-0"></span>
+                                        <span class="text-slate-700 dark:text-slate-300 text-xs truncate max-w-[130px]" title="{{ $ann->title }}">{{ $ann->title }}</span>
                                     </div>
                                 </td>
-                                <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ $a[2] }}</td>
-                                <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400">{{ $a[3] }}</td>
-                                <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300">{{ $a[4] }}</td>
+                                <td class="py-3 pr-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    {{ $ann->created_at->format('d M, Y') }}
+                                </td>
+                                <td class="py-3 pr-4 text-xs text-slate-600 dark:text-slate-300 truncate max-w-[100px]">{{ $ann->posted_by }}</td>
                                 <td class="py-3 text-right">
-                                    <button class="text-slate-400 hover:text-[#0d4c8f] dark:hover:text-white transition-colors">
+                                    <a href="{{ route('admin.announcements') }}"
+                                       class="text-slate-400 hover:text-[#0d4c8f] dark:hover:text-white transition-colors">
                                         <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
-                                    </button>
+                                    </a>
                                 </td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                @endif
+            </div>
+
+            {{-- ── Gender Breakdown Card ── --}}
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
+                <div class="mb-5 flex items-center gap-3">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10">
+                        <iconify-icon icon="solar:users-group-rounded-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Student Gender</h3>
+                </div>
+
+                @php
+                    $femalePct = $totalStudents > 0 ? round($femaleStudents / $totalStudents * 100) : 0;
+                    $malePct   = $totalStudents > 0 ? round($maleStudents   / $totalStudents * 100) : 0;
+                @endphp
+
+                {{-- Female --}}
+                <div class="mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/20">
+                                <iconify-icon icon="solar:women-linear" width="18" class="text-pink-500 dark:text-pink-300"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Female</p>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500">{{ $femalePct }}% of total</p>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-bold text-pink-500 dark:text-pink-400">{{ $femaleStudents }}</span>
+                    </div>
+                    <div class="h-2 w-full rounded-full bg-pink-100 dark:bg-pink-900/20">
+                        <div class="h-2 rounded-full bg-pink-400 transition-all duration-500" style="width: {{ $femalePct }}%"></div>
+                    </div>
+                </div>
+
+                {{-- Male --}}
+                <div class="mb-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/20">
+                                <iconify-icon icon="solar:men-linear" width="18" class="text-sky-500 dark:text-sky-300"></iconify-icon>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Male</p>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500">{{ $malePct }}% of total</p>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-bold text-sky-500 dark:text-sky-400">{{ $maleStudents }}</span>
+                    </div>
+                    <div class="h-2 w-full rounded-full bg-sky-100 dark:bg-sky-900/20">
+                        <div class="h-2 rounded-full bg-sky-400 transition-all duration-500" style="width: {{ $malePct }}%"></div>
+                    </div>
+                </div>
+
+                {{-- Combined bar --}}
+                <div class="mt-4 pt-4 border-t border-slate-100 dark:border-dark-border">
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mb-1.5">Distribution</p>
+                    <div class="flex h-2.5 w-full overflow-hidden rounded-full">
+                        <div class="h-full bg-pink-400 transition-all duration-500" style="width: {{ $femalePct }}%"></div>
+                        <div class="h-full bg-sky-400 transition-all duration-500" style="width: {{ $malePct }}%"></div>
+                    </div>
+                    <div class="mt-2 flex justify-between text-[10px] text-slate-400">
+                        <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-pink-400 inline-block"></span> Female {{ $femalePct }}%</span>
+                        <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-sky-400 inline-block"></span> Male {{ $malePct }}%</span>
+                    </div>
                 </div>
             </div>
 
@@ -193,34 +281,29 @@
 
             <div class="flex flex-col gap-6">
 
-                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
+                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card" id="reminders-widget">
                     <div class="mb-4 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <iconify-icon icon="solar:bell-linear" width="20" class="text-slate-700 dark:text-slate-300"></iconify-icon>
                             <h3 class="text-base font-semibold text-slate-900 dark:text-white">Reminders</h3>
                         </div>
-                        <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-dark-border dark:text-slate-400 dark:hover:bg-white/5 font-bold text-base">+</button>
+                        <button onclick="toggleReminderInput()" title="Add reminder"
+                            class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 dark:border-dark-border dark:text-slate-400 dark:hover:bg-blue-900/20 font-bold text-base transition-colors">+</button>
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <div class="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 dark:border-yellow-800/40 dark:bg-yellow-900/10">
-                            <div class="flex items-center gap-2">
-                                <iconify-icon icon="solar:clock-circle-linear" width="16" class="text-yellow-500"></iconify-icon>
-                                <span class="text-sm text-slate-700 dark:text-slate-300">Afternoon Meeting</span>
-                            </div>
-                            <button class="text-slate-400 hover:text-red-500 transition-colors">
-                                <iconify-icon icon="solar:trash-bin-trash-linear" width="16"></iconify-icon>
-                            </button>
-                        </div>
-                        <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-dark-border dark:bg-white/5">
-                            <div class="flex items-center gap-2">
-                                <iconify-icon icon="solar:check-circle-linear" width="16" class="text-green-500"></iconify-icon>
-                                <span class="text-sm text-slate-700 dark:text-slate-300">Applicant Screening</span>
-                            </div>
-                            <button class="text-slate-400 hover:text-red-500 transition-colors">
-                                <iconify-icon icon="solar:trash-bin-trash-linear" width="16"></iconify-icon>
-                            </button>
-                        </div>
+
+                    {{-- Add reminder input (hidden by default) --}}
+                    <div id="reminder-input-row" style="display:none" class="flex gap-2 mb-3">
+                        <input id="reminder-text" type="text" placeholder="Type a reminder…" maxlength="120"
+                            class="flex-1 rounded-lg border border-slate-200 dark:border-dark-border dark:bg-dark-card dark:text-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onkeydown="if(event.key==='Enter')saveReminder(); if(event.key==='Escape')toggleReminderInput();">
+                        <button onclick="saveReminder()"
+                            class="shrink-0 rounded-lg bg-[#0d4c8f] hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 transition-colors">Save</button>
                     </div>
+
+                    <div id="reminders-list" class="flex flex-col gap-2">
+                        {{-- Populated by JS from localStorage --}}
+                    </div>
+                    <p id="reminders-empty" class="text-xs text-slate-400 dark:text-slate-500 text-center py-4 hidden">No reminders. Click <strong>+</strong> to add one.</p>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-card">
@@ -232,18 +315,11 @@
                         <canvas id="studentStatusChart"></canvas>
                     </div>
                     <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
-                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Active</span></div>
-                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-yellow-400 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Graduated</span></div>
-                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-green-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Completed</span></div>
-                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-400 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Inactive</span></div>
-                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-red-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Withdrawn</span></div>
-                    </div>
-                    <div class="mt-3 flex items-center gap-2">
-                        <span class="text-xs text-slate-500 dark:text-slate-400">School Year:</span>
-                        <select class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 focus:outline-none dark:border-dark-border dark:bg-dark-card dark:text-slate-400">
-                            <option>Current</option>
-                            <option>2024-2025</option>
-                        </select>
+                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Active <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $studentStatusData['active'] }}</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-yellow-400 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Graduated <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $studentStatusData['graduated'] }}</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-green-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Completed <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $studentStatusData['completed'] }}</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-400 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Inactive <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $studentStatusData['inactive'] }}</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-red-500 shrink-0"></span><span class="text-xs text-slate-500 dark:text-slate-400">Withdrawn <span class="font-semibold text-slate-700 dark:text-slate-300">{{ $studentStatusData['withdrawn'] }}</span></span></div>
                     </div>
                 </div>
 
@@ -316,7 +392,6 @@
             <div class="px-6 pb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">Legend</span>
                 @foreach([
-                    ['bg-green-200',  'Regular'],
                     ['bg-purple-200', 'Holiday'],
                     ['bg-red-300',    'Suspended'],
                     ['bg-yellow-200', 'School Event'],
@@ -339,18 +414,15 @@
 
     </div>
 
+{{-- ── Inline data for dashboard.js (must run before the module initialises charts) ── --}}
+<script>
+    window.mmscStatusData = @json($studentStatusData);
+</script>
+
 @push('scripts')
 <script>
-    // ── Event data (replace with real backend data) ──
-    const calEvents = {
-        '2026-04-02': [{ label: 'Quarter Exam Elementary', color: 'bg-blue-100 text-blue-700', type: 'exam' }],
-        '2026-04-03': [{ label: 'Quarter Exam Elementary', color: 'bg-blue-100 text-blue-700', type: 'exam' }],
-        '2026-04-04': [{ label: 'Quarter Exam Elementary', color: 'bg-blue-100 text-blue-700', type: 'exam' }],
-        '2026-04-05': [{ label: 'Araw ng Kagitingan', color: 'bg-purple-100 text-purple-700', type: 'holiday' }],
-        '2026-04-13': [{ label: 'School Foundation', color: 'bg-yellow-100 text-yellow-700', type: 'event' }],
-        '2026-04-20': [{ label: 'Early Dismissal\nGrade 1-5\nParent Meeting 10-11am', color: 'bg-amber-100 text-amber-700', type: 'early' }],
-        '2026-04-21': [{ label: 'Suspended\nTyphoon', color: 'bg-red-100 text-red-700', type: 'suspended' }],
-    };
+    // ── Event data from database ──
+    const calEvents = @json($calEvents ?? []);
  
     let calCurrent = new Date();
     let calView = 'month';
@@ -360,10 +432,21 @@
         return `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     }
     function isWeekend(col) { return col % 7 === 0 || col % 7 === 6; }
- 
-    // Returns true if the date should show a "Regular Class" default
-    function isRegularDay(ds, col) {
-        return !isWeekend(col) && !calEvents[ds];
+    function getCalendarEvent(ds) {
+        return calEvents[ds] || null;
+    }
+    function renderBadge(ds, compact = false) {
+        const ev = getCalendarEvent(ds);
+        if (ev) {
+            const desc = ev.description
+                ? `<div class="${compact ? 'mt-0' : 'mt-0.5'} opacity-75 truncate">${ev.description}</div>`
+                : '';
+            return `<div class="rounded ${compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-[11px]'} leading-tight mb-0.5 ${ev.badge_class}">
+                        <div class="truncate">${ev.label || ''}</div>${desc}
+                    </div>`;
+        }
+
+        return '';
     }
  
     // ── Month View ───────────────────────────────────────────
@@ -403,34 +486,28 @@
  
             const isToday   = isCurrent && day === today.getDate() && m === today.getMonth() && y === today.getFullYear();
             const weekend   = col === 0 || col === 6;
-            const events    = calEvents[ds] || [];
-            const regular   = isCurrent && !weekend && events.length === 0;
+            const event     = getCalendarEvent(ds);
             const cellBg    = weekend && isCurrent ? 'bg-slate-50 dark:bg-white/[0.02]' : '';
  
-            html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[80px] p-1.5 ${cellBg}">`;
+            html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[92px] p-2 ${cellBg}">`;
             html += `<div class="flex justify-end mb-1">
                         <span class="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full
                             ${isToday ? 'bg-[#0d4c8f] text-white' : isCurrent ? 'text-slate-700 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}">
                             ${day}
                         </span>
                      </div>`;
- 
-            if (regular) {
-                html += `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 bg-green-100 text-green-700"><div>Regular Class</div></div>`;
+
+            if (isCurrent && !weekend) {
+                html += renderBadge(ds, true);
+            } else if (event) {
+                html += renderBadge(ds, true);
             }
- 
-            events.forEach(ev => {
-                const lines = ev.label.split('\n');
-                html += `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${ev.color}">`;
-                lines.forEach(l => { html += `<div>${l}</div>`; });
-                html += `</div>`;
-            });
- 
+
             html += `</div>`;
         }
         grid.innerHTML = html;
     }
- 
+
     // ── Week View ────────────────────────────────────────────
     function renderWeek() {
         const grid  = document.getElementById('cal-grid');
@@ -458,10 +535,9 @@
  
         days.forEach((dd, col) => {
             const ds      = dateStr(dd.getFullYear(), dd.getMonth(), dd.getDate());
-            const events  = calEvents[ds] || [];
+            const event   = getCalendarEvent(ds);
             const weekend = col === 0 || col === 6;
             const isToday = dd.toDateString() === today.toDateString();
-            const regular = !weekend && events.length === 0;
             const cellBg  = weekend ? 'bg-slate-50 dark:bg-white/[0.02]' : '';
  
             html += `<div class="border-r border-b border-slate-200 dark:border-dark-border min-h-[120px] p-2 ${cellBg}">`;
@@ -472,23 +548,16 @@
                         </span>
                      </div>`;
  
-            if (regular) {
-                html += `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 bg-green-100 text-green-700"><div>Regular Class</div></div>`;
+            if (!weekend || event) {
+                html += renderBadge(ds, true);
             }
- 
-            events.forEach(ev => {
-                const lines = ev.label.split('\n');
-                html += `<div class="rounded px-1.5 py-0.5 text-[10px] leading-tight mb-0.5 ${ev.color}">`;
-                lines.forEach(l => { html += `<div>${l}</div>`; });
-                html += `</div>`;
-            });
- 
+
             html += `</div>`;
         });
- 
+
         grid.innerHTML = html;
     }
- 
+
     // ── Day View ─────────────────────────────────────────────
     function renderDay() {
         const grid  = document.getElementById('cal-grid');
@@ -503,24 +572,18 @@
  
         title.textContent = calCurrent.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
  
-        const events  = calEvents[ds] || [];
+        const event   = getCalendarEvent(ds);
         const weekend = col === 0 || col === 6;
-        const regular = !weekend && events.length === 0;
  
         let html = `<div class="col-span-7 border-r border-b border-slate-200 dark:border-dark-border min-h-[160px] p-4">`;
  
         if (weekend) {
             html += `<p class="text-sm text-slate-400 dark:text-slate-500 italic">Weekend — No Classes</p>`;
-        } else if (regular) {
-            html += `<div class="rounded px-2 py-1 text-sm bg-green-100 text-green-700 inline-block">Regular Class</div>`;
         }
- 
-        events.forEach(ev => {
-            const lines = ev.label.split('\n');
-            html += `<div class="rounded px-2 py-1 text-sm mb-1 ${ev.color} inline-block">`;
-            lines.forEach(l => { html += `<div>${l}</div>`; });
-            html += `</div>`;
-        });
+
+        if (!weekend || event) {
+            html += renderBadge(ds);
+        }
  
         html += `</div>`;
         grid.innerHTML = html;
@@ -542,23 +605,18 @@
             const ds  = dateStr(y, m, d);
             const dow = new Date(y, m, d).getDay();
             const weekend = dow === 0 || dow === 6;
-            const events  = calEvents[ds] || [];
-            const regular = !weekend && events.length === 0;
+            const event   = getCalendarEvent(ds);
             const dayLabel = new Date(y, m, d).toLocaleDateString('default', { weekday: 'short', day: 'numeric' });
  
-            if (weekend && events.length === 0) continue; // skip empty weekends in list
+            if (weekend && !event) continue; // skip empty weekends in list
  
             html += `<div class="flex items-start gap-4 px-4 py-3">`;
             html += `<span class="text-xs font-medium text-slate-500 dark:text-slate-400 w-16 shrink-0 pt-0.5">${dayLabel}</span>`;
             html += `<div class="flex flex-wrap gap-1">`;
  
-            if (regular) {
-                html += `<span class="rounded px-2 py-0.5 text-xs bg-green-100 text-green-700">Regular Class</span>`;
+            if (!weekend || event) {
+                html += renderBadge(ds, true);
             }
-            events.forEach(ev => {
-                const first = ev.label.split('\n')[0];
-                html += `<span class="rounded px-2 py-0.5 text-xs ${ev.color}">${first}</span>`;
-            });
  
             html += `</div></div>`;
         }
@@ -613,6 +671,107 @@
     }
  
     document.addEventListener('DOMContentLoaded', renderCal);
+
+    // ── Student Status Chart — update with real DB data ──────
+    document.addEventListener('DOMContentLoaded', function () {
+        const canvas = document.getElementById('studentStatusChart');
+        if (!canvas || !window.Chart) return;
+        const chart = window.Chart.getChart(canvas);
+        if (!chart) return;
+        const d = window.mmscStatusData || {};
+        chart.data.datasets[0].data = [
+            d.active    || 0,
+            d.graduated || 0,
+            d.completed || 0,
+            d.inactive  || 0,
+            d.withdrawn || 0,
+        ];
+        chart.update();
+    });
+
+    // ── Reminders (localStorage) ─────────────────────────────
+    const RKEY = 'mmsc_reminders_{{ auth()->id() }}';
+
+    function loadReminders() {
+        try { return JSON.parse(localStorage.getItem(RKEY) || '[]'); }
+        catch { return []; }
+    }
+    function saveReminders(list) {
+        localStorage.setItem(RKEY, JSON.stringify(list));
+    }
+
+    function renderReminders() {
+        const list  = loadReminders();
+        const wrap  = document.getElementById('reminders-list');
+        const empty = document.getElementById('reminders-empty');
+        if (!wrap) return;
+
+        wrap.innerHTML = '';
+        if (list.length === 0) {
+            empty && empty.classList.remove('hidden');
+            return;
+        }
+        empty && empty.classList.add('hidden');
+
+        list.forEach((r, idx) => {
+            const isPending = !r.done;
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between rounded-lg border px-3 py-2.5 gap-2 '
+                + (isPending
+                    ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800/40 dark:bg-yellow-900/10'
+                    : 'border-slate-200 bg-slate-50 dark:border-dark-border dark:bg-white/5');
+            item.innerHTML = `
+                <button onclick="toggleReminderDone(${idx})" class="flex items-center gap-2 flex-1 text-left min-w-0">
+                    <iconify-icon icon="${isPending ? 'solar:clock-circle-linear' : 'solar:check-circle-bold'}"
+                        width="16" class="${isPending ? 'text-yellow-500 shrink-0' : 'text-green-500 shrink-0'}"></iconify-icon>
+                    <span class="text-xs text-slate-700 dark:text-slate-300 truncate ${r.done ? 'line-through opacity-50' : ''}">${escHtml(r.text)}</span>
+                </button>
+                <button onclick="deleteReminder(${idx})" class="shrink-0 text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 transition-colors">
+                    <iconify-icon icon="solar:trash-bin-trash-linear" width="15"></iconify-icon>
+                </button>`;
+            wrap.appendChild(item);
+        });
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    window.toggleReminderInput = function () {
+        const row = document.getElementById('reminder-input-row');
+        if (!row) return;
+        const shown = row.style.display !== 'none';
+        row.style.display = shown ? 'none' : 'flex';
+        if (!shown) setTimeout(() => document.getElementById('reminder-text')?.focus(), 50);
+    };
+
+    window.saveReminder = function () {
+        const inp = document.getElementById('reminder-text');
+        const text = (inp?.value || '').trim();
+        if (!text) return;
+        const list = loadReminders();
+        list.unshift({ text, done: false, created: Date.now() });
+        saveReminders(list);
+        inp.value = '';
+        document.getElementById('reminder-input-row').style.display = 'none';
+        renderReminders();
+    };
+
+    window.deleteReminder = function (idx) {
+        const list = loadReminders();
+        list.splice(idx, 1);
+        saveReminders(list);
+        renderReminders();
+    };
+
+    window.toggleReminderDone = function (idx) {
+        const list = loadReminders();
+        if (list[idx]) list[idx].done = !list[idx].done;
+        saveReminders(list);
+        renderReminders();
+    };
+
+    document.addEventListener('DOMContentLoaded', renderReminders);
 </script>
 @endpush
 

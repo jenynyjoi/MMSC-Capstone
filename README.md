@@ -64,3 +64,84 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+
+
+SYSTEM FLOW
+
+PHASE 2 — ENROLLMENT / SECTION ASSIGNMENT
+=========================================
+FILE PLACEMENT GUIDE
+=========================================
+
+MIGRATIONS (run in order):
+  database/migrations/2026_02_01_000001_create_sections_table.php
+  database/migrations/2026_02_01_000002_create_student_enrollment_table.php
+  database/migrations/2026_02_01_000003_create_enrollment_support_tables.php
+
+MODELS:
+  app/Models/Section.php
+  app/Models/StudentEnrollment.php
+
+CONTROLLERS:
+  app/Http/Controllers/Admin/EnrollmentController.php
+  app/Http/Controllers/Admin/SectionController.php
+
+VIEWS:
+  resources/views/admin/enrollment/enroll.blade.php       ← replaces old enroll.blade.php
+  resources/views/admin/classes/sections.blade.php        ← replaces old sections.blade.php
+
+ROUTES (routes/web.php):
+  Add the contents of routes_to_add.php INSIDE the admin group
+  Add these imports at the top:
+    use App\Http\Controllers\Admin\EnrollmentController;
+    use App\Http\Controllers\Admin\SectionController;
+
+Also update Student model (app/Models/Student.php):
+  The AdmissionReviewController already calls:
+    StudentEnrollment::createFromApplication($application, $student);
+  So import StudentEnrollment in AdmissionReviewController.
+
+UPDATE AdmissionReviewController.php:
+  Add at top: use App\Models\StudentEnrollment;
+  In approveAndTransfer(), after creating student:
+    StudentEnrollment::createFromApplication($application, $student);
+
+RUN:
+  php artisan migrate
+  php artisan route:clear
+  php artisan view:clear
+
+=========================================
+WHAT EACH FILE DOES
+=========================================
+
+EnrollmentController:
+  - index()              → Shows Regular + Irregular tabs
+  - getAvailableSections → AJAX: returns sections filtered by grade/track/strand
+  - assignSection        → AJAX: assigns student to section, increments enrollment
+  - bulkAssignPreview    → AJAX: returns section availability for bulk modal
+  - bulkAssign           → AJAX: processes bulk using chosen method
+  - balancingPreview     → AJAX: shows split-sections distribution preview
+  - editSection          → AJAX: moves student between sections with reason
+
+SectionController:
+  - index()  → Section management list with filters + stats
+  - store()  → Create new section (form POST or AJAX)
+  - update() → Edit section
+  - destroy()→ Delete section (blocks if students enrolled)
+
+enroll.blade.php:
+  - Regular tab: table + stat cards + filters
+  - Irregular tab: table with Track/Strand columns
+  - Individual Assign modal: shows section list with capacity
+  - Bulk Assign modal: shows section table, insufficient slots handling
+  - Balancing Preview modal: shows distribution before confirmation
+  - Edit Section modal: move student with reason
+
+sections.blade.php:
+  - Section list with capacity, adviser status, availability badges
+  - Add Section modal (form)
+  - Edit Section modal (populated via JS)
+  - Delete via AJAX with guard for enrolled students

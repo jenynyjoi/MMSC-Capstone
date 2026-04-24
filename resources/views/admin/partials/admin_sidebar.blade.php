@@ -6,7 +6,7 @@
         <!-- ── Logo ── -->
         <div class="flex h-16 items-center justify-between px-6 border-b border-white/10 bg-[#0d4c8f] dark:bg-[#0b1224]">
             <div class="flex items-center gap-2">
-                <img src="{{ asset('img/download.jpg') }}" class="h-10 w-10 rounded-full object-cover">
+                <img src="{{ asset('images/messiah-logo.png') }}" class="h-10 w-10 rounded-full object-cover">
                 <div id="logo-text" class="flex flex-col leading-tight">
                     <span class="text-xl font-bold text-white tracking-tight font-poppins">MMSC</span>
                     <span class="text-xs text-white/70 font-medium">Admin</span>
@@ -15,7 +15,9 @@
         </div>
 
         <!-- ── Nav ── -->
-        <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-0.5">
+        <nav class="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-0.5"
+             x-data="sidebarNav()"
+             x-on:sidebar-collapsed.window="openItem = null">
 
             @php
                 $navItems = [
@@ -47,7 +49,7 @@
                         'icon'  => 'ph:folders-fill',
                         'href'  => '#',
                         'sub'   => [
-                            ['label' => 'Student List',       'href' => route('admin.student-records.list'),       'route' => 'admin.student-records.*'],
+                            ['label' => 'Student List',       'href' => route('admin.student-records.list'),       'route' => 'admin.student-records.list'],
                             ['label' => 'Withdrawn Students', 'href' => route('admin.student-records.withdrawn'),  'route' => 'admin.student-records.withdrawn'],
                             ['label' => 'Behavioral Records', 'href' => route('admin.student-records.behavioral'), 'route' => 'admin.student-records.behavioral'],
                             ['label' => 'Student Archives',   'href' => route('admin.student-records.archives'),   'route' => 'admin.student-records.archives'],
@@ -62,6 +64,8 @@
                             ['label' => 'Finance',           'href' => route('admin.clearance.finance'),           'route' => 'admin.clearance.finance'],
                             ['label' => 'Library',           'href' => route('admin.clearance.library'),           'route' => 'admin.clearance.library'],
                             ['label' => 'Records',           'href' => route('admin.clearance.records'),           'route' => 'admin.clearance.records'],
+                            ['label' => 'Behavioral',        'href' => route('admin.clearance.behavioral'),        'route' => 'admin.clearance.behavioral'],
+                            ['label' => 'Property',          'href' => route('admin.clearance.property'),          'route' => 'admin.clearance.property'],
                             ['label' => 'Summary',           'href' => route('admin.clearance.summary'),           'route' => 'admin.clearance.summary'],
                         ],
                     ],
@@ -145,9 +149,12 @@
                     [
                         'label' => 'School Calendar',
                         'icon'  => 'solar:calendar-bold',
-                        'href'  =>  route('admin.school-calendar.index'),
+                        'href'  => route('admin.school-calendar.index'),
                         'route' => 'admin.school-calendar.index',
-                        'sub'   => [],
+                        'sub'   => [
+                            ['label' => 'Calendar',              'href' => route('admin.school-calendar.index'),    'route' => 'admin.school-calendar.index'],
+                            ['label' => 'School Year Config',    'href' => route('admin.school-year-config.index'), 'route' => 'admin.school-year-config.index'],
+                        ],
                     ],
                     [
                         'label' => 'Settings',
@@ -176,11 +183,11 @@
                         }
                     @endphp
 
-                    <div x-data="{ open: {{ $isSubActive ? 'true' : 'false' }} }">
+                    <div>
 
                         <button
-                            @click="open = !open"
-                            :class="open
+                            @click="toggle('{{ $item['label'] }}')"
+                            :class="isOpen('{{ $item['label'] }}')
                                 ? 'bg-blue-50 text-[#0d4c8f] dark:bg-[#0d4c8f]/10 dark:text-blue-300'
                                 : 'text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-[#0d4c8f] dark:hover:bg-[#0d4c8f]/10 dark:hover:text-blue-300'"
                             class="group w-full flex items-center gap-3 rounded-lg px-3 py-2.5
@@ -188,25 +195,25 @@
                             title="{{ $item['label'] }}">
 
                             <iconify-icon icon="{{ $item['icon'] }}" width="20" class="shrink-0"
-                                :class="open ? 'text-[#0d4c8f] dark:text-blue-300' : 'text-slate-400 group-hover:text-[#0d4c8f] dark:group-hover:text-blue-300'">
+                                :class="isOpen('{{ $item['label'] }}') ? 'text-[#0d4c8f] dark:text-blue-300' : 'text-slate-400 group-hover:text-[#0d4c8f] dark:group-hover:text-blue-300'">
                             </iconify-icon>
 
                             <span class="nav-text flex-1 text-left">{{ $item['label'] }}</span>
 
                             <iconify-icon icon="solar:alt-arrow-down-linear" width="16"
                                 class="nav-text shrink-0 transition-transform duration-300"
-                                :class="open ? 'rotate-180 text-[#0d4c8f] dark:text-blue-300' : 'text-slate-400 group-hover:text-[#0d4c8f] dark:group-hover:text-blue-300'">
+                                :class="isOpen('{{ $item['label'] }}') ? 'rotate-180 text-[#0d4c8f] dark:text-blue-300' : 'text-slate-400 group-hover:text-[#0d4c8f] dark:group-hover:text-blue-300'">
                             </iconify-icon>
                         </button>
 
-                        <div x-show="open"
+                        <div x-show="isOpen('{{ $item['label'] }}')"
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 -translate-y-1"
                              x-transition:enter-end="opacity-100 translate-y-0"
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0"
                              x-transition:leave-end="opacity-0 -translate-y-1"
-                             class="mt-0.5 ml-5 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-0.5 py-1">
+                             class="mt-0.5 ml-8 pl-3 border-l-2 border-slate-200 dark:border-slate-700 space-y-0.5 py-1">
 
                             @php $prevGroup = null; @endphp
                             @foreach ($item['sub'] as $sub)
@@ -217,24 +224,24 @@
 
                                 {{-- Group label divider --}}
                                 @if ($currentGroup && $currentGroup !== $prevGroup)
-                                    <p class="px-3 pt-2 pb-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                                    <p class="px-3 pt-3 pb-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide border-t border-slate-100 dark:border-slate-700/60 mt-1">
                                         {{ $currentGroup }}
                                     </p>
                                     @php $prevGroup = $currentGroup; @endphp
                                 @endif
 
                                 <a href="{{ $sub['href'] }}"
-                                   class="flex items-center gap-2 rounded-lg px-3 py-2
+                                   class="flex items-center gap-2 px-3 py-2 -ml-[13px] pl-[11px] border-l-2
                                           text-xs font-medium transition-all duration-150
                                           {{ $subActive
-                                              ? 'bg-blue-50 text-[#0d4c8f] dark:bg-[#0d4c8f]/10 dark:text-blue-300'
-                                              : 'text-slate-500 dark:text-slate-400 hover:bg-blue-50 hover:text-[#0d4c8f] dark:hover:bg-[#0d4c8f]/10 dark:hover:text-blue-300' }}">
+                                              ? 'border-[#0d4c8f] text-[#0d4c8f] dark:border-blue-400 dark:text-blue-300'
+                                              : 'border-transparent text-slate-500 dark:text-slate-400 hover:border-[#0d4c8f] hover:text-[#0d4c8f] dark:hover:border-blue-400 dark:hover:text-blue-300' }}">
                                     {{ $sub['label'] }}
                                 </a>
                             @endforeach
                         </div>
 
-                    </div>
+                    </div><!-- /.dropdown-item -->
 
                 @else
 
@@ -266,3 +273,28 @@
 
 {{-- ── Alpine.js ── --}}
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+@php
+    // Determine which item is active on page load
+    $activeLabel = null;
+    foreach ($navItems as $item) {
+        if (!empty($item['sub'])) {
+            foreach ($item['sub'] as $sub) {
+                if (isset($sub['route']) && request()->routeIs($sub['route'])) {
+                    $activeLabel = $item['label'];
+                    break 2;
+                }
+            }
+        }
+    }
+@endphp
+
+function sidebarNav() {
+    return {
+        openItem: @json($activeLabel),
+        isOpen(label)  { return this.openItem === label; },
+        toggle(label)  { this.openItem = this.openItem === label ? null : label; },
+    };
+}
+</script>
