@@ -94,7 +94,8 @@
                             applicationId: {{ $application->id }},
                             studentId: null,
                             gradeLevel: '{{ addslashes($application->incoming_grade_level ?? $application->applied_level) }}',
-                            studentCategory: '{{ addslashes($application->student_category ?? 'Regular') }}',
+                            studentCategory: '{{ addslashes($application->student_category ?? 'Regular Payee') }}',
+                            subsidyPrevSchoolType: '{{ addslashes($application->subsidy_prev_school_type ?? '') }}',
                             schoolYear: '{{ $application->school_year }}',
                             studentName: '{{ addslashes($application->first_name.' '.$application->last_name) }}',
                             onSaved: function() { openRecordsModalApprove(); }
@@ -168,14 +169,14 @@
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Uploaded Documents</p>
                 @php
                     $docList = [
-                        ['PSA Birth Certificate',  'psa',         $application->psa_uploaded,        $application->psa_filename],
-                        ['Report Card (Form 138)', 'report_card', $application->report_card_uploaded, $application->report_card_filename],
-                        ['Good Moral Certificate', 'good_moral',  $application->good_moral_uploaded,  $application->good_moral_filename],
+                        ['PSA Birth Certificate',  'psa',         $application->psa_uploaded,         $application->psa_filename,         $application->psa_path],
+                        ['Report Card (Form 138)', 'report_card', $application->report_card_uploaded,  $application->report_card_filename,  $application->report_card_path],
+                        ['Good Moral Certificate', 'good_moral',  $application->good_moral_uploaded,   $application->good_moral_filename,   $application->good_moral_path],
                     ];
                     $docCount = collect($docList)->filter(fn($d) => $d[2])->count();
                 @endphp
                 <div class="space-y-3">
-                    @foreach($docList as [$docName, $docKey, $uploaded, $filename])
+                    @foreach($docList as [$docName, $docKey, $uploaded, $filename, $filePath])
                     <div class="rounded-lg border {{ $uploaded ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800' : 'bg-slate-50 dark:bg-dark-border/30 border-slate-100 dark:border-dark-border' }} overflow-hidden">
                         <div class="flex items-center justify-between px-3 py-2.5">
                             <div class="flex items-center gap-2 min-w-0">
@@ -192,12 +193,11 @@
                             $ext     = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                             $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
                             $isPdf   = $ext === 'pdf';
-                            $fileUrl = Storage::disk('public')->url('applications/'.$application->reference_number.'/'.$filename);
-                                // ✅ FIXED route name: admin.admission.document (not admin.admin.admission.document) 
+                            $fileUrl = $filePath ? Storage::disk('public')->url($filePath) : null;
                             $dlRoute = route('admin.admission.document', [$application->id, $docKey]);
                         @endphp
                         <div class="flex items-center gap-2 px-3 pb-2.5 flex-wrap">
-                            @if($isImage || $isPdf)
+                            @if(($isImage || $isPdf) && $fileUrl)
                             <button type="button"
                                 onclick="openDocPreview('{{ $fileUrl }}','{{ $ext }}','{{ $docName }}')"
                                 class="flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 px-3 py-1.5 text-xs font-semibold transition-all">
@@ -260,8 +260,8 @@
                         'public'               => 'Public Elementary School',
                         'private'              => 'Private Elementary School',
                         'public_jhs'           => 'Public JHS Graduate',
-                        'private_jhs_esc'      => 'Private JHS with ESC Subsidy',
-                        'private_jhs_no_esc'   => 'Private JHS without ESC',
+                        'private_jhs_esc'      => 'ESC Private JHS Completer',
+                        'private_jhs_no_esc'   => 'MMSC JHS Completer (ESC Applied)',
                     ];
                     $subsidyLabel = $subsidyLabels[$application->subsidy_prev_school_type] ?? $application->subsidy_prev_school_type;
                     $isEscCategory = $application->student_category === 'ESC Grantee';
@@ -286,15 +286,15 @@
                                 'public'             => 'ESC Subsidy rate applies',
                                 'private'            => 'Subject to review',
                                 'public_jhs'         => 'FREE tuition (fully covered)',
-                                'private_jhs_esc'    => '₱14,000 tuition',
-                                'private_jhs_no_esc' => 'Regular rate (₱17,500)',
+                                'private_jhs_esc'    => '₱3,500 — ESC Subsidy',
+                                'private_jhs_no_esc' => '₱3,500 — ESC Applied',
                             ];
                             $rateColors = [
                                 'public'             => 'bg-green-100 text-green-700',
                                 'private'            => 'bg-amber-100 text-amber-700',
                                 'public_jhs'         => 'bg-green-100 text-green-700',
                                 'private_jhs_esc'    => 'bg-blue-100 text-blue-700',
-                                'private_jhs_no_esc' => 'bg-slate-100 text-slate-600',
+                                'private_jhs_no_esc' => 'bg-blue-100 text-blue-700',
                             ];
                         @endphp
                         <div>
@@ -471,8 +471,8 @@
                             $cat === 'ESC Grantee' && $prevType === 'private' => 'ESC Grantee — Private Elementary Graduate',
                             $cat === 'ESC Grantee'                            => 'ESC Grantee',
                             $cat === 'SHS Voucher Recipient' && $prevType === 'public_jhs'         => 'SHS Voucher — Public JHS Graduate (FREE Tuition)',
-                            $cat === 'SHS Voucher Recipient' && $prevType === 'private_jhs_esc'    => 'SHS Voucher — Private JHS with ESC (₱14,000 Subsidy)',
-                            $cat === 'SHS Voucher Recipient' && $prevType === 'private_jhs_no_esc' => 'SHS Voucher — Private JHS without ESC (Regular Rate)',
+                            $cat === 'SHS Voucher Recipient' && $prevType === 'private_jhs_esc'    => 'SHS Voucher — ESC Private JHS Completer (₱3,500)',
+                            $cat === 'SHS Voucher Recipient' && $prevType === 'private_jhs_no_esc' => 'SHS Voucher — MMSC JHS Completer (₱3,500)',
                             $cat === 'SHS Voucher Recipient'                                       => 'SHS Voucher Recipient',
                             default => 'Regular Payee',
                         };
@@ -776,14 +776,13 @@
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Message Type</label>
                 <select name="message_type" id="notice-message-type" onchange="updateNoticeSubject(this)"
                     class="w-full rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0d4c8f] transition-all">
-                    <option value="Application Approved">✅ Application Approved</option>
-                    <option value="Application Rejected">❌ Application Rejected</option>
-                    <option value="Missing Requirements">📋 Missing Requirements</option>
-                    <option value="Pending Payment">💰 Pending Payment</option>
-                    <option value="Document Verification Needed">🔍 Document Verification Needed</option>
-                    <option value="Interview Schedule">📅 Interview Schedule</option>
-                    <option value="Entrance Exam Schedule">📝 Entrance Exam Schedule</option>
-                    <option value="Custom Message">✏️ Custom Message</option>
+                    <option value="Application Approved">Application Approved</option>
+                    <option value="Application Rejected">Application Rejected</option>
+                    <option value="Missing Requirements">Missing Requirements</option>
+                    <option value="Pending Payment">Pending Payment</option>
+                    <option value="Document Verification Needed"> Document Verification Needed</option>
+                    <option value="Interview Schedule">Interview Schedule</option>
+                    <option value="Custom Message">Custom Message</option>
                 </select>
             </div>
             <div class="mb-3">

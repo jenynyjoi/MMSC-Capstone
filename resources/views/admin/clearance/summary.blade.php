@@ -99,7 +99,7 @@
             <input type="hidden" name="school_year" value="{{ $schoolYear }}">
 
             {{-- Row 1 --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                 {{-- School Year --}}
                 <div class="flex flex-col gap-1">
                     <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">School Year</label>
@@ -108,14 +108,31 @@
                         <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="text-slate-400"></iconify-icon>
                     </div>
                 </div>
-                {{-- Grade & Section --}}
+                {{-- Grade Level --}}
                 <div class="flex flex-col gap-1">
-                    <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Grade and Section</label>
+                    <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Grade Level</label>
                     <div class="relative">
-                        <select name="grade_section" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All</option>
+                        <select name="grade_level" onchange="document.getElementById('filter-form').submit()"
+                            class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Grades</option>
+                            @foreach($grades as $g)
+                                <option value="{{ $g }}" {{ $gradeLevel === $g ? 'selected' : '' }}>{{ $g }}</option>
+                            @endforeach
+                        </select>
+                        <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90"></iconify-icon>
+                    </div>
+                </div>
+                {{-- Section --}}
+                <div class="flex flex-col gap-1">
+                    <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Section</label>
+                    <div class="relative">
+                        <select name="section"
+                            class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Sections</option>
                             @foreach($sections as $sec)
-                                <option value="{{ $sec }}" {{ request('grade_section')===$sec?'selected':'' }}>{{ $sec }}</option>
+                                <option value="{{ $sec->section_name }}" {{ $sectionFilter === $sec->section_name ? 'selected' : '' }}>
+                                    {{ $gradeLevel ? $sec->section_name : $sec->grade_level.' – '.$sec->section_name }}
+                                </option>
                             @endforeach
                         </select>
                         <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90"></iconify-icon>
@@ -156,7 +173,6 @@
                             <option value="cleared"   {{ request('library_status')==='cleared'?'selected':'' }}>Cleared</option>
                             <option value="pending"   {{ request('library_status')==='pending'?'selected':'' }}>Pending</option>
                             <option value="overdue"   {{ request('library_status')==='overdue'?'selected':'' }}>Overdue</option>
-                            <option value="no_record" {{ request('library_status')==='no_record'?'selected':'' }}>No Books</option>
                         </select>
                         <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90"></iconify-icon>
                     </div>
@@ -197,19 +213,26 @@
                     <div class="relative">
                         <select name="property_status" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">All</option>
-                            <option value="cleared"      {{ request('property_status')==='cleared'?'selected':'' }}>Cleared</option>
-                            <option value="issued"       {{ request('property_status')==='issued'?'selected':'' }}>Issued</option>
-                            <option value="for_issuance" {{ request('property_status')==='for_issuance'?'selected':'' }}>For Issuance</option>
-                            <option value="overdue"      {{ request('property_status')==='overdue'?'selected':'' }}>Overdue</option>
+                            <option value="cleared" {{ request('property_status')==='cleared'?'selected':'' }}>Cleared</option>
+                            <option value="pending" {{ request('property_status')==='pending'?'selected':'' }}>Pending</option>
+                            <option value="overdue" {{ request('property_status')==='overdue'?'selected':'' }}>Overdue</option>
                         </select>
                         <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90"></iconify-icon>
                     </div>
                 </div>
-                {{-- Academic (placeholder) --}}
+                {{-- Academic Status --}}
                 <div class="flex flex-col gap-1">
                     <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Academic Status</label>
-                    <div class="flex items-center rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50/70 dark:bg-slate-800/40 px-3 py-2 text-xs text-slate-400 italic">
-                        Not configured
+                    <div class="relative">
+                        <select name="academic_status"
+                            class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Status</option>
+                            <option value="passed"   {{ ($academicFilter ?? '') === 'passed'   ? 'selected' : '' }}>Passed</option>
+                            <option value="failed"   {{ ($academicFilter ?? '') === 'failed'   ? 'selected' : '' }}>Failed</option>
+                            <option value="retained" {{ ($academicFilter ?? '') === 'retained' ? 'selected' : '' }}>Retained</option>
+                            <option value="active"   {{ ($academicFilter ?? '') === 'active'   ? 'selected' : '' }}>Active</option>
+                        </select>
+                        <iconify-icon icon="solar:alt-arrow-right-linear" width="14" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none rotate-90"></iconify-icon>
                     </div>
                 </div>
 
@@ -291,24 +314,16 @@
                     // Plain colored text helper for category columns
                     $statusText = function(string $status): string {
                         $colors = [
-                            'cleared'      => 'text-green-600 dark:text-green-400',
-                            'pending'      => 'text-yellow-600 dark:text-yellow-400',
-                            'overdue'      => 'text-red-600 dark:text-red-400',
-                            'missing'      => 'text-red-600 dark:text-red-400',
-                            'no_record'    => 'text-slate-400 dark:text-slate-500',
-                            'for_issuance' => 'text-slate-500 dark:text-slate-400',
-                            'issued'       => 'text-blue-600 dark:text-blue-400',
-                            'null'         => 'text-slate-300 dark:text-slate-600',
+                            'cleared' => 'text-green-600 dark:text-green-400',
+                            'pending' => 'text-yellow-600 dark:text-yellow-400',
+                            'overdue' => 'text-red-600 dark:text-red-400',
+                            'null'    => 'text-slate-300 dark:text-slate-600',
                         ];
                         $labels = [
-                            'cleared'      => 'Cleared',
-                            'pending'      => 'Pending',
-                            'overdue'      => 'Overdue',
-                            'missing'      => 'Missing',
-                            'no_record'    => 'No Books',
-                            'for_issuance' => 'For Issuance',
-                            'issued'       => 'Issued',
-                            'null'         => '—',
+                            'cleared' => 'Cleared',
+                            'pending' => 'Pending',
+                            'overdue' => 'Overdue',
+                            'null'    => '—',
                         ];
                         $cls = $colors[$status] ?? $colors['null'];
                         $txt = $labels[$status] ?? ucfirst($status);
@@ -534,9 +549,9 @@
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                             :class="{
                                 'bg-green-100 text-green-700': c.status === 'cleared',
-                                'bg-yellow-100 text-yellow-700': c.status === 'pending' || c.status === 'no_record' || c.status === 'for_issuance' || c.status === 'issued',
-                                'bg-red-100 text-red-700': c.status === 'overdue' || c.status === 'missing',
-                                'bg-slate-100 text-slate-400': c.status === 'null',
+                                'bg-yellow-100 text-yellow-700': c.status === 'pending' || c.status === 'no_record' || c.status === 'missing',
+                                'bg-red-100 text-red-700': c.status === 'overdue',
+                                'bg-slate-100 text-slate-400': !c.status || c.status === 'null',
                             }"
                             x-text="statusLabel(c.status)">
                         </span>
@@ -703,8 +718,8 @@
             },
             close() { document.getElementById('details-modal').style.display = 'none'; },
             statusLabel(s) {
-                const m = { cleared:'Cleared', pending:'Pending', overdue:'Overdue', missing:'Missing',
-                            no_record:'No Books', for_issuance:'For Issuance', issued:'Issued', null:'—' };
+                const m = { cleared:'Cleared', pending:'Pending', overdue:'Overdue',
+                            missing:'Pending', no_record:'Pending', null:'—' };
                 return m[s] ?? s;
             },
         };

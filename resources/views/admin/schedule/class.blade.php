@@ -446,18 +446,29 @@
                                     <div class="mb-2">
                                         <p class="text-[10px] font-semibold text-green-700 dark:text-green-400 mb-1">Assigned:</p>
                                         <div class="flex flex-wrap gap-1">
-                                            <template x-for="s in autoAssignResult.assigned" :key="s">
-                                                <span class="inline-flex items-center rounded px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-[10px] font-semibold text-green-700 dark:text-green-400" x-text="s"></span>
+                                            <template x-for="s in autoAssignResult.assigned" :key="s.subject + s.day">
+                                                <span class="inline-flex items-center rounded px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-[10px] font-semibold text-green-700 dark:text-green-400"
+                                                      x-text="s.subject + ' · ' + s.day + ' ' + s.time"></span>
                                             </template>
                                         </div>
                                     </div>
                                 </template>
                                 <template x-if="autoAssignResult.skipped.length > 0">
                                     <div>
-                                        <p class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 mb-1">Could not assign (no free slot found):</p>
-                                        <div class="flex flex-wrap gap-1">
-                                            <template x-for="s in autoAssignResult.skipped" :key="s">
-                                                <span class="inline-flex items-center rounded px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-[10px] font-semibold text-amber-700 dark:text-amber-400" x-text="s"></span>
+                                        <p class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 mb-1">Could not assign:</p>
+                                        <div class="flex flex-col gap-1">
+                                            <template x-for="s in autoAssignResult.skipped" :key="s.subject">
+                                                <div class="flex items-start gap-1.5">
+                                                    <iconify-icon
+                                                        :icon="s.reason && s.reason.includes('No teacher') ? 'solar:user-cross-bold' : 'solar:close-circle-bold'"
+                                                        width="12"
+                                                        :class="s.reason && s.reason.includes('No teacher') ? 'text-amber-500' : 'text-red-400'"
+                                                        class="mt-0.5 flex-shrink-0"></iconify-icon>
+                                                    <div>
+                                                        <span class="text-[10px] font-semibold text-slate-700 dark:text-slate-300" x-text="s.subject"></span>
+                                                        <span class="text-[10px] text-slate-400 ml-1" x-text="'— ' + (s.reason || 'No free slot found.')"></span>
+                                                    </div>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
@@ -490,27 +501,60 @@
                                 <span x-text="isAutoAssigning ? 'Assigning…' : 'Auto Assign'"></span>
                             </button>
                         </div>
+                        {{-- No-teacher warning summary --}}
+                        <template x-if="gridData.allocations.some(a => !a.teacher_id)">
+                            <div class="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-900/10 px-3 py-2">
+                                <iconify-icon icon="solar:danger-triangle-bold" width="14" class="text-amber-500 mt-0.5 flex-shrink-0"></iconify-icon>
+                                <p class="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                                    <span x-text="gridData.allocations.filter(a => !a.teacher_id).length"></span>
+                                    subject(s) have no teacher assigned and cannot be scheduled.
+                                    Assign a teacher first before setting up the schedule.
+                                </p>
+                            </div>
+                        </template>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="alloc in gridData.allocations" :key="alloc.id">
                                 <div class="inline-flex items-start gap-2 rounded-xl border px-3 py-2"
-                                     :class="alloc.meetings_per_week > 0 && alloc.scheduled_count >= alloc.meetings_per_week
-                                             ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
-                                             : 'bg-white dark:bg-dark-card border-slate-200 dark:border-dark-border'">
-                                    <div class="w-2 h-2 rounded-full mt-1 flex-shrink-0"
+                                     :class="!alloc.teacher_id
+                                             ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
+                                             : (alloc.meetings_per_week > 0 && alloc.scheduled_count >= alloc.meetings_per_week
+                                                ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
+                                                : 'bg-white dark:bg-dark-card border-slate-200 dark:border-dark-border')">
+
+                                    {{-- Icon: warning (no teacher) vs status dot --}}
+                                    <div x-show="!alloc.teacher_id" class="flex-shrink-0 mt-0.5">
+                                        <iconify-icon icon="solar:danger-triangle-bold" width="13" class="text-amber-500"></iconify-icon>
+                                    </div>
+                                    <div x-show="alloc.teacher_id" class="w-2 h-2 rounded-full mt-1 flex-shrink-0"
                                          :class="alloc.meetings_per_week > 0 && alloc.scheduled_count >= alloc.meetings_per_week ? 'bg-green-500' : 'bg-blue-400'"></div>
+
                                     <div>
                                         <p class="text-xs font-semibold text-slate-700 dark:text-slate-200" x-text="alloc.subject_code + ' — ' + alloc.subject_name"></p>
-                                        <p class="text-[10px] text-slate-400 mb-1" x-text="alloc.teacher_name"></p>
-                                        <div class="flex items-center gap-1 flex-wrap">
-                                            <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300"
-                                                  x-text="(alloc.hours_per_meeting || '—') + 'h/mtg'"></span>
-                                            <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                                                  :class="alloc.meetings_per_week > 0 && alloc.scheduled_count >= alloc.meetings_per_week
-                                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                                                          : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'"
-                                                  x-text="alloc.scheduled_count + '/' + (alloc.meetings_per_week || '?') + ' mtg/wk'"></span>
-                                            <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300"
-                                                  x-text="(alloc.hours_per_week || '—') + 'h/wk'"></span>
+
+                                        {{-- No teacher state --}}
+                                        <div x-show="!alloc.teacher_id">
+                                            <p class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mb-1.5">No teacher assigned</p>
+                                            <a href="{{ route('admin.academic.subjects') }}" target="_blank"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors">
+                                                <iconify-icon icon="solar:user-plus-bold" width="11"></iconify-icon>
+                                                Assign Teacher Now
+                                            </a>
+                                        </div>
+
+                                        {{-- Has teacher state --}}
+                                        <div x-show="alloc.teacher_id">
+                                            <p class="text-[10px] text-slate-400 mb-1" x-text="alloc.teacher_name"></p>
+                                            <div class="flex items-center gap-1 flex-wrap">
+                                                <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300"
+                                                      x-text="(alloc.hours_per_meeting || '—') + 'h/mtg'"></span>
+                                                <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                                                      :class="alloc.meetings_per_week > 0 && alloc.scheduled_count >= alloc.meetings_per_week
+                                                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                                              : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'"
+                                                      x-text="alloc.scheduled_count + '/' + (alloc.meetings_per_week || '?') + ' mtg/wk'"></span>
+                                                <span class="inline-flex items-center rounded px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300"
+                                                      x-text="(alloc.hours_per_week || '—') + 'h/wk'"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -572,8 +616,13 @@
                             <option :value="alloc.id" x-text="alloc.subject_code + ' — ' + alloc.subject_name + ' (' + alloc.teacher_name + ')'"></option>
                         </template>
                     </select>
-                    <p class="mt-1 text-[10px] text-slate-400" x-show="availableAllocations.length === 0 && !editScheduleId">
+                    <p class="mt-1 text-[10px] text-slate-400" x-show="availableAllocations.length === 0 && !editScheduleId && !gridData?.allocations.some(a => !a.teacher_id)">
                         All subjects are fully scheduled for this section.
+                    </p>
+                    <p class="mt-1 text-[10px] text-amber-600 flex items-center gap-1"
+                       x-show="availableAllocations.length === 0 && !editScheduleId && gridData?.allocations.some(a => !a.teacher_id)">
+                        <iconify-icon icon="solar:danger-triangle-bold" width="11"></iconify-icon>
+                        Some subjects have no teacher assigned. Assign teachers first to enable scheduling.
                     </p>
                 </div>
 
@@ -621,10 +670,24 @@
                     <div class="flex gap-2 flex-wrap">
                         <template x-for="day in ['Monday','Tuesday','Wednesday','Thursday','Friday']" :key="day">
                             <button type="button" @click="form.day = day"
-                                :class="form.day === day ? 'bg-[#0d4c8f] text-white border-[#0d4c8f]' : 'bg-white dark:bg-dark-card text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-border hover:border-[#0d4c8f]'"
+                                :class="form.day === day
+                                    ? 'bg-[#0d4c8f] text-white border-[#0d4c8f]'
+                                    : 'bg-white dark:bg-dark-card text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-border hover:border-[#0d4c8f]'"
                                 class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors" x-text="day"></button>
                         </template>
                     </div>
+                    {{-- Inline same-day conflict warning --}}
+                    <template x-if="sameDayWarning">
+                        <div class="mt-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10 px-3 py-2">
+                            <p class="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400">
+                                <iconify-icon icon="solar:danger-triangle-bold" width="13"></iconify-icon>
+                                <span x-text="'\"' + sameDayWarning.subject + '\" is already on ' + sameDayWarning.day + '.'"></span>
+                            </p>
+                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400"
+                               x-text="sameDayWarning.freeDays.length ? '→ Available days: ' + sameDayWarning.freeDays.join(', ') : '→ All weekdays are occupied for this subject.'">
+                            </p>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- Time --}}
@@ -1031,6 +1094,8 @@ function classScheduleApp() {
             return this.gridData.allocations.filter(a => {
                 // Always include the one already chosen in the form (editing case)
                 if (this.editScheduleId && String(a.id) === String(this.form.allocation_id)) return true;
+                // Must have a teacher before a schedule can be assigned
+                if (!a.teacher_id) return false;
                 return !(a.meetings_per_week > 0 && a.scheduled_count >= a.meetings_per_week);
             });
         },
@@ -1039,6 +1104,36 @@ function classScheduleApp() {
         get selectedAlloc() {
             if (!this.form.allocation_id || !this.gridData) return null;
             return this.gridData.allocations.find(a => String(a.id) === String(this.form.allocation_id)) || null;
+        },
+
+        // ── Computed: same-subject-same-day instant warning ──
+        get sameDayWarning() {
+            if (!this.form.allocation_id || !this.form.day || !this.gridData) return null;
+            const grid = this.gridData.grid;
+            const allocId = String(this.form.allocation_id);
+            const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+
+            // Collect which days this allocation is already in the grid
+            const usedDays = [];
+            for (const slotKey of Object.keys(grid)) {
+                const row = grid[slotKey];
+                if (!row || row._break) continue;
+                for (const d of days) {
+                    const cell = row[d];
+                    if (cell && String(cell.allocation_id) === allocId && !usedDays.includes(d)) {
+                        usedDays.push(d);
+                    }
+                }
+            }
+
+            if (!usedDays.includes(this.form.day)) return null;
+
+            const freeDays = days.filter(d => !usedDays.includes(d));
+            return {
+                subject:  this.selectedAlloc?.subject_name ?? '',
+                day:      this.form.day,
+                freeDays: freeDays,
+            };
         },
 
         // ── Auto-compute time_end from hours_per_meeting ──

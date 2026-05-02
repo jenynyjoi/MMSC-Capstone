@@ -20,6 +20,18 @@
         </div>
     </div>
 
+    {{-- Settings Nav Tabs --}}
+    <div class="flex gap-1 mb-6 border-b border-slate-200 dark:border-dark-border">
+        <a href="{{ route('admin.settings.account') }}"
+           class="px-4 py-2 text-sm font-medium text-[#0d4c8f] dark:text-blue-400 border-b-2 border-[#0d4c8f] dark:border-blue-400">
+            Account
+        </a>
+        <a href="{{ route('admin.settings.general') }}"
+           class="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors border-b-2 border-transparent">
+            General
+        </a>
+    </div>
+
     {{-- Main Card --}}
     <div class="rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card shadow-sm overflow-hidden">
 

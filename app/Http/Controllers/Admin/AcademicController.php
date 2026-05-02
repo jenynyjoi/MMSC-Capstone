@@ -590,20 +590,33 @@ class AcademicController extends Controller
             ->keyBy('grade_level');
 
         $gradeLevels = [
-            'Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
+            'Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
             'Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12',
         ];
 
         $result = [];
         foreach ($gradeLevels as $gl) {
-            $cfg      = $configs->get($gl);
+            $isShs = in_array($gl, ['Grade 11', 'Grade 12']);
+            if ($isShs) {
+                // Aggregate across all strand-specific configs (e.g. 'Grade 11 - STEM')
+                $strandConfigs = $configs->filter(fn($c) => str_starts_with($c->grade_level, $gl . ' - '));
+                $exactCfg      = $configs->get($gl);
+                $hasConfig     = $strandConfigs->isNotEmpty() || (bool)$exactCfg;
+                $assigned      = $strandConfigs->sum('subjects_count') + ($exactCfg ? $exactCfg->subjects_count : 0);
+                $required      = $strandConfigs->sum('total_subjects_required') + ($exactCfg ? $exactCfg->total_subjects_required : 0);
+            } else {
+                $cfg       = $configs->get($gl);
+                $hasConfig = (bool)$cfg;
+                $assigned  = $cfg ? $cfg->subjects_count : 0;
+                $required  = $cfg ? $cfg->total_subjects_required : 0;
+            }
             $result[] = [
                 'grade_level'   => $gl,
                 'short'         => $this->gradeShort($gl),
-                'has_config'    => (bool)$cfg,
-                'assigned'      => $cfg ? $cfg->subjects_count : 0,
-                'required'      => $cfg ? $cfg->total_subjects_required : 0,
-                'program_level' => $cfg ? $cfg->program_level : $this->defaultProgramLevel($gl),
+                'has_config'    => $hasConfig,
+                'assigned'      => $assigned,
+                'required'      => $required,
+                'program_level' => $this->defaultProgramLevel($gl),
             ];
         }
 
@@ -614,6 +627,14 @@ class AcademicController extends Controller
     {
         $schoolYear = $request->get('school_year', \App\Models\SchoolYear::activeName());
         $gradeLevel = $request->get('grade_level');
+
+        // Parse SHS strand keys like 'Grade 11 - STEM' into base grade + strand
+        $baseGrade = $gradeLevel;
+        $strand    = null;
+        if (preg_match('/^(Grade 1[12]) - (.+)$/', $gradeLevel, $m)) {
+            $baseGrade = $m[1];
+            $strand    = $m[2];
+        }
 
         $config = GradeCurriculumConfig::with(['subjects.subject'])
             ->where('grade_level', $gradeLevel)
@@ -630,9 +651,12 @@ class AcademicController extends Controller
             ->groupBy('subject_id')
             ->pluck('cnt', 'subject_id');
 
-        // Active subjects for this grade level not yet assigned to this curriculum
+        // For SHS strand keys: query by base grade and include core (strand=null) + strand-specific subjects
         $allSubjects = Subject::where('is_active', true)
-            ->where('grade_level', $gradeLevel)
+            ->where('grade_level', $baseGrade)
+            ->when($strand, fn($q) => $q->where(fn($q2) =>
+                $q2->where('strand', $strand)->orWhereNull('strand')
+            ))
             ->whereNotIn('id', $existingIds)
             ->orderBy('subject_code')
             ->get(['id','subject_code','subject_name','meetings_per_week','hours_per_meeting','subject_type','default_semester']);
@@ -677,12 +701,28 @@ class AcademicController extends Controller
         ]);
 
         DB::transaction(function () use ($request) {
+            // Parse SHS strand from 'Grade 11 - STEM' format
+            $gradeLevel = $request->grade_level;
+            $baseGrade  = $gradeLevel;
+            $strand     = null;
+            if (preg_match('/^(Grade 1[12]) - (.+)$/', $gradeLevel, $m)) {
+                $baseGrade = $m[1];
+                $strand    = $m[2];
+            }
+
             $config = GradeCurriculumConfig::updateOrCreate(
-                ['grade_level' => $request->grade_level, 'school_year' => $request->school_year],
+                ['grade_level' => $gradeLevel, 'school_year' => $request->school_year],
                 ['program_level' => $request->program_level, 'total_subjects_required' => $request->total_subjects_required]
             );
 
-            $semesterOverride = $request->semester; // null if not SHS
+            $semesterOverride = $request->semester;
+
+            // Sections for this grade/strand/school year to auto-allocate into
+            $sections = Section::where('school_year', $request->school_year)
+                ->where('grade_level', $baseGrade)
+                ->where('is_subject_section', false)
+                ->when($strand, fn($q) => $q->where('strand', $strand))
+                ->get(['id']);
 
             foreach ($request->subject_ids as $subjectId) {
                 $subject = Subject::find($subjectId);
@@ -697,6 +737,24 @@ class AcademicController extends Controller
                         'semester'          => $semesterOverride ?? $subject?->default_semester,
                     ]
                 );
+
+                // Auto-allocate to all matching sections (no teacher yet)
+                foreach ($sections as $section) {
+                    SubjectAllocation::firstOrCreate(
+                        [
+                            'section_id'  => $section->id,
+                            'subject_id'  => $subjectId,
+                            'school_year' => $request->school_year,
+                        ],
+                        [
+                            'subject_code'   => $subject?->subject_code,
+                            'subject_name'   => $subject?->subject_name,
+                            'hours_per_week' => $subject?->hours_per_week,
+                            'teacher_id'     => null,
+                            'created_by'     => auth()->id(),
+                        ]
+                    );
+                }
             }
         });
 
@@ -732,7 +790,32 @@ class AcademicController extends Controller
 
     public function removeCurriculumSubject(int $id)
     {
-        GradeCurriculumSubject::findOrFail($id)->delete();
+        $cs     = GradeCurriculumSubject::with('config')->findOrFail($id);
+        $config = $cs->config;
+
+        // Remove subject from sections that have no teacher assigned yet
+        if ($config) {
+            $baseGrade = $config->grade_level;
+            $strand    = null;
+            if (preg_match('/^(Grade 1[12]) - (.+)$/', $config->grade_level, $m)) {
+                $baseGrade = $m[1];
+                $strand    = $m[2];
+            }
+
+            $sectionIds = Section::where('school_year', $config->school_year)
+                ->where('grade_level', $baseGrade)
+                ->where('is_subject_section', false)
+                ->when($strand, fn($q) => $q->where('strand', $strand))
+                ->pluck('id');
+
+            SubjectAllocation::whereIn('section_id', $sectionIds)
+                ->where('subject_id', $cs->subject_id)
+                ->where('school_year', $config->school_year)
+                ->whereNull('teacher_id')
+                ->delete();
+        }
+
+        $cs->delete();
         return response()->json(['success' => true, 'message' => 'Subject removed from curriculum.']);
     }
 
@@ -800,7 +883,7 @@ class AcademicController extends Controller
 
     private function defaultProgramLevel(string $g): string
     {
-        if (in_array($g, ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'])) return 'Elementary';
+        if (in_array($g, ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'])) return 'Elementary';
         if (in_array($g, ['Grade 7','Grade 8','Grade 9','Grade 10'])) return 'Junior High School';
         return 'Senior High School';
     }

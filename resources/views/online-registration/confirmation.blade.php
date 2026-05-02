@@ -112,7 +112,7 @@
                         <p style="font-size:0.75rem; color:#475569; margin:0 0 4px;"><strong>Hours:</strong> Monday – Friday, 7:30 AM – 5:00 PM</p>
                         <p style="font-size:0.72rem; color:#0d4c8f; font-weight:700; margin:6px 0 4px;">Bring these original documents:</p>
                         <ul style="font-size:0.72rem; color:#475569; list-style:disc; padding-left:1.25rem; margin:0; line-height:1.9;">
-                            <li>Printed copy of this confirmation</li>
+                            <li>Printed copy of application form (A4 size of paper)</li>
                             <li>PSA Birth Certificate</li>
                             <li>Report Card (Form 138) — for transferees</li>
                             <li>Good Moral Certificate</li>

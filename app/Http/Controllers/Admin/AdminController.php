@@ -18,7 +18,7 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $activeSchoolYear = \App\Models\SchoolYear::where('status', 'active')->value('name') ?? '2025-2026';
+        $activeSchoolYear = \App\Models\SchoolYear::activeName();
 
         $calEvents = \App\Models\SchoolCalendarEvent::where('school_year', $activeSchoolYear)
             ->where('day_type', '!=', 'regular')
@@ -336,7 +336,7 @@ TEXT;
             } elseif ($st === 'overdue') {
                 $query->whereHas('libraryRecord', fn($q) => $q->where('school_year', $schoolYear)->where('status', 'overdue'));
             } elseif ($st === 'pending') {
-                $query->whereHas('libraryRecord', fn($q) => $q->where('school_year', $schoolYear)->whereIn('status', ['pending','no_record']));
+                $query->whereHas('libraryRecord', fn($q) => $q->where('school_year', $schoolYear)->where('status', 'pending'));
             }
         }
 
@@ -431,7 +431,7 @@ TEXT;
     public function updateLibraryStatus(Request $request, int $id)
     {
         $request->validate([
-            'status'     => 'required|in:cleared,pending,overdue,no_record',
+            'status'     => 'required|in:cleared,pending,overdue',
             'cleared_by' => 'nullable|string|max:150',
             'remarks'    => 'nullable|string|max:500',
         ]);
@@ -539,12 +539,12 @@ TEXT;
             return $allApproved ? 'cleared' : ($anyMissing ? 'missing' : 'pending');
         };
 
-        // Helper: overall status from individual statuses
+        // Helper: overall status from individual statuses.
+        // Only finance overdue drives the overall "overdue" state.
+        // All other non-cleared statuses (missing, pending, etc.) count as pending.
         $overallStatus = function ($fin, $lib, $prop, $beh, $rec) {
-            $isCleared = fn($s) => $s === 'cleared';
-            $isOverdue = fn($s) => in_array($s, ['overdue', 'missing']);
-            if ($isCleared($fin) && $isCleared($lib) && $isCleared($prop) && $isCleared($beh) && $isCleared($rec)) return 'cleared';
-            if ($isOverdue($fin) || $isOverdue($lib) || $isOverdue($prop) || $isOverdue($beh) || $isOverdue($rec)) return 'overdue';
+            if ($fin === 'cleared' && $lib === 'cleared' && $prop === 'cleared' && $beh === 'cleared' && $rec === 'cleared') return 'cleared';
+            if ($fin === 'overdue') return 'overdue';
             return 'pending';
         };
 
@@ -555,8 +555,8 @@ TEXT;
 
         foreach ($allEnrolled as $s) {
             $fin = $finAll->get($s->id)?->finance_clearance ?? 'pending';
-            $lib = $libAll->get($s->id)?->status            ?? 'no_record';
-            $prop= $propAll->get($s->id)?->status           ?? 'for_issuance';
+            $lib = $libAll->get($s->id)?->status            ?? 'pending';
+            $prop= $propAll->get($s->id)?->status           ?? 'pending';
             $beh = $s->behavioral_clearance                 ?? 'pending';
             $rec = $recordsStatus($s->reference_number);
             $ov  = $overallStatus($fin, $lib, $prop, $beh, $rec);
@@ -582,10 +582,15 @@ TEXT;
         ];
 
         // ── Paginated query for the table ─────────────────────────────────────
+        $gradeLevel    = $request->get('grade_level', '');
+        $sectionFilter = $request->get('section', '');
+        $academicFilter = $request->get('academic_status', '');
+
         $query = Student::where('school_year', $schoolYear)->where('enrollment_status', 'enrolled');
 
-        if ($request->filled('grade_section'))  $query->where('grade_level', $request->grade_section);
-        if ($request->filled('program_level'))  $query->where('applied_level', $request->program_level);
+        if ($gradeLevel)     $query->where('grade_level', $gradeLevel);
+        if ($sectionFilter)  $query->where('section_name', $sectionFilter);
+        if ($request->filled('program_level')) $query->where('applied_level', $request->program_level);
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q->where('first_name','like',"%$s%")->orWhere('last_name','like',"%$s%")->orWhere('student_id','like',"%$s%"));
@@ -606,11 +611,11 @@ TEXT;
 
         $students->each(function ($student) use ($libPage, $propPage, $finPage, $appPage, $recordsStatus, $overallStatus) {
             $student->finance_status    = $finPage->get($student->id)?->finance_clearance ?? 'pending';
-            $student->library_status    = $libPage->get($student->id)?->status            ?? 'no_record';
-            $student->property_status   = $propPage->get($student->id)?->status           ?? 'for_issuance';
+            $student->library_status    = $libPage->get($student->id)?->status            ?? 'pending';
+            $student->property_status   = $propPage->get($student->id)?->status           ?? 'pending';
             $student->behavioral_status = $student->behavioral_clearance                   ?? 'pending';
             $student->records_status    = $recordsStatus($student->reference_number);
-            $student->academic_status   = null; // not configured yet
+            // academic_status comes from the Student model field directly
 
             $student->overall_status = $overallStatus(
                 $student->finance_status, $student->library_status,
@@ -619,7 +624,7 @@ TEXT;
             );
         });
 
-        // Filter by individual status if requested (post-load)
+        // Filter by individual clearance status (post-load)
         foreach (['finance','library','property','behavioral','records'] as $cat) {
             if ($request->filled($cat.'_status')) {
                 $students->setCollection(
@@ -632,13 +637,30 @@ TEXT;
                 $students->getCollection()->filter(fn($s) => $s->overall_status === $request->get('overall_status'))->values()
             );
         }
+        if ($academicFilter !== '') {
+            $students->setCollection(
+                $students->getCollection()->filter(function ($s) use ($academicFilter) {
+                    $val = $s->academic_status ?? '';
+                    return strtolower($val) === strtolower($academicFilter);
+                })->values()
+            );
+        }
 
-        $sections = Student::where('school_year', $schoolYear)
-            ->where('enrollment_status', 'enrolled')
-            ->whereNotNull('grade_level')->distinct()->pluck('grade_level')->sort()->values();
+        // Grade levels for filter dropdown
+        $grades = Student::where('school_year', $schoolYear)->where('enrollment_status', 'enrolled')
+            ->whereNotNull('grade_level')->distinct()->orderBy('grade_level')->pluck('grade_level');
+
+        // Sections for filter dropdown (scoped to selected grade if any)
+        $sections = \App\Models\Section::where('school_year', $schoolYear)
+            ->where('section_status', 'active')
+            ->where('is_subject_section', false)
+            ->when($gradeLevel, fn($q) => $q->where('grade_level', $gradeLevel))
+            ->orderBy('grade_level')->orderBy('section_name')
+            ->get(['grade_level', 'section_name']);
 
         return view('admin.clearance.summary', compact(
-            'students', 'schoolYear', 'allSchoolYears', 'sections',
+            'students', 'schoolYear', 'allSchoolYears', 'grades', 'sections',
+            'gradeLevel', 'sectionFilter', 'academicFilter',
             'totalStudents', 'clearedCount', 'pendingCount', 'overdueCount',
             'progress'
         ));
@@ -723,14 +745,12 @@ TEXT;
                 ->orWhere('student_id','like',"%$s%"));
         }
 
-        // Filter by property record status (not students.property_clearance)
         if ($request->filled('clearance_status')) {
             $status = $request->clearance_status;
-            // Map UI status to property record statuses
             $recordStatuses = match($status) {
                 'cleared' => ['cleared'],
                 'overdue' => ['overdue'],
-                'pending' => ['for_issuance', 'issued'],
+                'pending' => ['pending'],
                 default   => [],
             };
             if ($recordStatuses) {
@@ -782,48 +802,34 @@ TEXT;
     public function issuePropertyItems(Request $request, int $id)
     {
         $request->validate([
-            'items'   => 'required|array',
-            'items.*.item_name' => 'required|string|max:100',
-            'items.*.issued'    => 'boolean',
-            'items.*.returned'  => 'boolean',
-            'items.*.damaged'   => 'boolean',
+            'items'                   => 'required|array',
+            'items.*.item_name'       => 'required|string|max:100',
+            'items.*.lost'            => 'boolean',
+            'items.*.damaged'         => 'boolean',
             'items.*.replacement_fee' => 'nullable|numeric|min:0',
         ]);
 
         $student = Student::findOrFail($id);
-        $schoolYear = $student->school_year;
 
         $record = StudentPropertyRecord::firstOrCreate(
-            ['student_id' => $student->id, 'school_year' => $schoolYear],
-            ['status' => 'for_issuance']
+            ['student_id' => $student->id, 'school_year' => $student->school_year],
+            ['status' => 'pending']
         );
 
-        $hasIssued = false;
         foreach ($request->items as $itemData) {
-            $issued   = (bool)($itemData['issued']   ?? false);
-            $returned = (bool)($itemData['returned'] ?? false);
-            $damaged  = (bool)($itemData['damaged']  ?? false);
-            $fee      = (float)($itemData['replacement_fee'] ?? 0);
-
-            if ($issued) $hasIssued = true;
+            $lost    = (bool)($itemData['lost']    ?? false);
+            $damaged = (bool)($itemData['damaged'] ?? false);
+            $fee     = (float)($itemData['replacement_fee'] ?? 0);
 
             $record->items()->updateOrCreate(
                 ['item_name' => $itemData['item_name']],
                 [
-                    'issued'          => $issued,
-                    'returned'        => $returned,
+                    'issued'          => true,
+                    'returned'        => $lost,    // repurposed: true = lost
                     'damaged'         => $damaged,
-                    'replacement_fee' => $fee,
-                    'issued_at'       => $issued ? ($record->issued_at ?? now()) : null,
-                    'returned_at'     => $returned ? now() : null,
+                    'replacement_fee' => ($lost || $damaged) ? $fee : 0,
                 ]
             );
-        }
-
-        if ($hasIssued && !$record->issued_at) {
-            $record->issued_at = now();
-            $record->issued_by = auth()->id();
-            $record->save();
         }
 
         $record->load('items');
@@ -846,7 +852,11 @@ TEXT;
     public function updatePropertyClearance(Request $request, int $id)
     {
         $request->validate(['status' => 'required|in:pending,cleared,overdue']);
-        Student::findOrFail($id)->update(['property_clearance' => $request->status]);
+        $student = Student::findOrFail($id);
+        $student->update(['property_clearance' => $request->status]);
+        StudentPropertyRecord::where('student_id', $id)
+            ->where('school_year', $student->school_year)
+            ->update(['status' => $request->status]);
         return response()->json(['success' => true, 'message' => 'Property clearance updated.']);
     }
 
@@ -1192,5 +1202,38 @@ TEXT;
     }
 
     public function settingsUserManagement()    { return view('admin.settings.user-management'); }
-    public function settingsGeneral()           { return view('admin.settings.general'); }
+
+    public function settingsGeneral()
+    {
+        $settings = \App\Models\AppSetting::pluck('value', 'key');
+        return view('admin.settings.general', compact('settings'));
+    }
+
+    public function saveGeneralSettings(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'school_name'    => 'required|string|max:200',
+            'school_address' => 'nullable|string|max:500',
+            'school_phone'   => 'nullable|string|max:50',
+            'school_email'   => 'nullable|email|max:150',
+            'school_motto'   => 'nullable|string|max:300',
+            'school_logo'    => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        $keys = ['school_name', 'school_address', 'school_phone', 'school_email', 'school_motto'];
+        foreach ($keys as $key) {
+            \App\Models\AppSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+        }
+
+        if ($request->hasFile('school_logo')) {
+            $existing = \App\Models\AppSetting::where('key', 'school_logo')->value('value');
+            if ($existing && \Illuminate\Support\Facades\Storage::disk('public')->exists($existing)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing);
+            }
+            $path = $request->file('school_logo')->store('school', 'public');
+            \App\Models\AppSetting::updateOrCreate(['key' => 'school_logo'], ['value' => $path]);
+        }
+
+        return back()->with('success', 'General settings saved successfully.');
+    }
 }

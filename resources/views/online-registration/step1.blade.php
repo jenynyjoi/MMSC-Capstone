@@ -122,7 +122,6 @@
                                 <option value="HE"     data-track="TVL"           {{ old('strand', $data['strand'] ?? '') === 'HE'     ? 'selected' : '' }}>HE — Home Economics (Cookery, Tourism)</option>
                                 <option value="ICT"    data-track="TVL"           {{ old('strand', $data['strand'] ?? '') === 'ICT'    ? 'selected' : '' }}>ICT — Information & Communications Technology</option>
                                 <option value="IA"     data-track="TVL"           {{ old('strand', $data['strand'] ?? '') === 'IA'     ? 'selected' : '' }}>IA — Industrial Arts</option>
-                                <option value="AFA"    data-track="TVL"           {{ old('strand', $data['strand'] ?? '') === 'AFA'    ? 'selected' : '' }}>AFA — Agri-Fishery Arts</option>
                                 <option value="AD"     data-track="Arts &amp; Design" {{ old('strand', $data['strand'] ?? '') === 'AD'  ? 'selected' : '' }}>Arts & Design</option>
                                 <option value="Sports" data-track="Sports"        {{ old('strand', $data['strand'] ?? '') === 'Sports' ? 'selected' : '' }}>Sports</option>
                             </select>
@@ -171,6 +170,13 @@
                     </div>
                 </div><br>
 
+                {{-- Grade 11 hint --}}
+                <div id="grade11-hint" style="display:none; margin-bottom:1rem; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 12px;">
+                    <p style="font-size:0.75rem; color:#0369a1; margin:0; line-height:1.5;">
+                        <strong>Grade 11 Applicants:</strong> If you completed Grade 10 at MMSC (My Messiah School of Cavite), select <strong>Old Student</strong> — you qualify for the <strong>SHS Full Voucher</strong> (₱3,500 reduced rate as an MMSC JHS completer). If you are coming from a different school, select <strong>New Student</strong>.
+                    </p>
+                </div>
+
                 {{-- Student Status --}}
                 <div style="margin-bottom:1.25rem;">
                     <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px;">Student Status <span style="color:#ef4444;">*</span></label>
@@ -181,7 +187,7 @@
                                 onchange="updateStatusUI()" style="margin-top:3px; flex-shrink:0;">
                             <span>
                                 <strong>Old Student</strong>
-                                <span style="display:block; font-size:0.75rem; color:#64748b; margin-top:1px;">Previously enrolled at My Messiah School of Cavite (MMSC). SHS Voucher may apply if you graduated from MMSC JHS.</span>
+                                <span style="display:block; font-size:0.75rem; color:#64748b; margin-top:1px;">Previously enrolled at My Messiah School of Cavite (MMSC). SHS Voucher may apply if you are MMSC JHS completer.</span>
                             </span>
                         </label>
                         <label id="status-new-label" style="display:flex; align-items:flex-start; gap:8px; font-size:0.875rem; color:#374151; cursor:pointer; padding:10px 12px; border-radius:8px; border:1.5px solid #e2e8f0; background:#fff;">
@@ -197,7 +203,7 @@
                     {{-- Old student SHS voucher note --}}
                     <div id="old-student-shs-note" style="display:none; margin-top:8px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px;">
                         <p style="font-size:0.75rem; color:#92400e; margin:0; line-height:1.5;">
-                            <strong>SHS Voucher Note:</strong> As an MMSC graduate applying for SHS, you may qualify for the reduced SHS tuition rate of <strong>₱3,500</strong> under the ESC-applied voucher. Select <em>SHS Voucher Recipient</em> below and choose the appropriate option.
+                            <strong>SHS Voucher Note:</strong> As an MMSC JHS completer applying for SHS, you may qualify for the reduced SHS tuition rate of <strong>₱3,500</strong> under the ESC-applied voucher. Select <em>SHS Voucher Recipient</em> below and choose the appropriate option.
                         </p>
                     </div>
                 </div>
@@ -291,7 +297,7 @@
                                         {{ old('subsidy_prev_school_type', $data['subsidy_prev_school_type'] ?? '') === 'public_jhs' ? 'checked' : '' }}
                                         style="margin-top:2px; flex-shrink:0;">
                                     <span>
-                                        <strong>Public JHS Graduate</strong>
+                                        <strong>Public JHS Completer</strong>
                                         <span style="display:block; font-size:0.75rem; color:#15803d; font-weight:600;">FREE tuition — fully covered by SHS voucher</span>
                                     </span>
                                 </label>
@@ -300,7 +306,7 @@
                                         {{ old('subsidy_prev_school_type', $data['subsidy_prev_school_type'] ?? '') === 'private_jhs_esc' ? 'checked' : '' }}
                                         style="margin-top:2px; flex-shrink:0;">
                                     <span>
-                                        <strong>Private JHS with ESC Subsidy</strong>
+                                        <strong>Private JHS Completerwith ESC Subsidy</strong>
                                         <span style="display:block; font-size:0.75rem; color:#0369a1; font-weight:600;">₱3,500 — partial voucher coverage applies</span>
                                     </span>
                                 </label>
@@ -309,8 +315,8 @@
                                         {{ old('subsidy_prev_school_type', $data['subsidy_prev_school_type'] ?? '') === 'private_jhs_no_esc' ? 'checked' : '' }}
                                         style="margin-top:2px; flex-shrink:0;">
                                     <span>
-                                        <strong>MMSC Graduate (My Messiah School of Cavite)</strong>
-                                        <span style="display:block; font-size:0.75rem; color:#0369a1; font-weight:600;">₱3,500 — ESC-applied voucher for MMSC JHS graduates</span>
+                                        <strong>MMSC Completer (My Messiah School of Cavite)</strong>
+                                        <span style="display:block; font-size:0.75rem; color:#0369a1; font-weight:600;">₱3,500 — ESC-applied voucher for MMSC JHS completer</span>
                                         <span style="display:block; font-size:0.72rem; color:#64748b; margin-top:1px;">Applies to students who completed Grade 10 at MMSC</span>
                                     </span>
                                 </label>
@@ -425,8 +431,34 @@ levelEl.addEventListener('change', () => {
     syncCategoryOptions(levelEl.value);
 });
 if (trackEl) trackEl.addEventListener('change', () => filterStrandsByTrack(trackEl.value));
+function updatePrevSchoolVisibility() {
+    const grade      = gradeEl.value;
+    const isRequired = PREV_SCHOOL_REQUIRED_GRADES.includes(grade);
+    const prevSchool = document.querySelector('input[name="previous_school"]');
+    const prevLabel  = prevSchool ? prevSchool.closest('div').querySelector('label') : null;
+
+    if (isRequired) {
+        transfereeBox.classList.remove('hidden');
+        if (prevSchool) prevSchool.required = true;
+        if (prevLabel && !prevLabel.querySelector('.req-star')) {
+            const star = document.createElement('span');
+            star.className = 'req-star';
+            star.style.color = '#ef4444';
+            star.textContent = ' *';
+            prevLabel.appendChild(star);
+        }
+    } else {
+        if (!transfereeCheck.checked) transfereeBox.classList.add('hidden');
+        if (prevSchool) prevSchool.required = false;
+        if (prevLabel) { const star = prevLabel.querySelector('.req-star'); if (star) star.remove(); }
+    }
+}
+
 transfereeCheck.addEventListener('change', function() {
-    transfereeBox.classList.toggle('hidden', !this.checked);
+    const prevRequired = PREV_SCHOOL_REQUIRED_GRADES.includes(gradeEl.value);
+    if (!prevRequired) {
+        transfereeBox.classList.toggle('hidden', !this.checked);
+    }
 
     const statusOld = document.getElementById('status_old');
     const statusNew = document.getElementById('status_new');
@@ -457,7 +489,7 @@ if (categoryEl) categoryEl.addEventListener('change', () => {
     checkEscGradeWarning();
 });
 
-gradeEl.addEventListener('change', () => { applyGradeRules(); checkEscGradeWarning(); });
+gradeEl.addEventListener('change', () => { applyGradeRules(); checkEscGradeWarning(); updatePrevSchoolVisibility(); });
 
 function checkEscGradeWarning() {
     const cat      = categoryEl.value;
@@ -474,6 +506,7 @@ function checkEscGradeWarning() {
 function updateStatusUI() {
     const isOld   = document.getElementById('status_old')?.checked;
     const isShs   = levelEl.value === 'Senior High School';
+    const grade   = gradeEl.value;
     const oldNote = document.getElementById('old-student-shs-note');
     const oldLbl  = document.getElementById('status-old-label');
     const newLbl  = document.getElementById('status-new-label');
@@ -484,6 +517,24 @@ function updateStatusUI() {
     if (oldLbl) oldLbl.style.background  = isOld ? '#f0f5ff' : '#fff';
     if (newLbl) newLbl.style.borderColor = !isOld ? '#0d4c8f' : '#e2e8f0';
     if (newLbl) newLbl.style.background  = !isOld ? '#f0f5ff' : '#fff';
+
+    // Grade 7 Old Student = MMSC elem completer continuing at MMSC, not a transferee
+    if (grade === 'Grade 7') {
+        if (isOld) {
+            lockTransferee(true, false);
+        } else {
+            lockTransferee(false, transfereeCheck.checked);
+        }
+    }
+
+    // Grade 11 Old Student = MMSC JHS completer continuing at MMSC, not a transferee
+    if (grade === 'Grade 11') {
+        if (isOld) {
+            lockTransferee(true, false);
+        } else {
+            lockTransferee(false, transfereeCheck.checked);
+        }
+    }
 
     // When Old Student + SHS: only show MMSC Graduate voucher option
     const optPublic = document.getElementById('voucher-opt-public');
@@ -506,9 +557,12 @@ function updateStatusUI() {
 levelEl.addEventListener('change', updateStatusUI);
 
 // ── Grade-based student status / transferee rules ──────────
-const FIRST_YEAR_GRADES     = ['Grade 1', 'Grade 7', 'Grade 11'];
-const TRANSFEREE_ONLY_GRADES = ['Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
-                                'Grade 8','Grade 9','Grade 10','Grade 12'];
+// Grade 7 and 11: Old Student allowed + previous school required
+// Grade 7 Old = MMSC elem completer; Grade 11 Old = MMSC JHS completer
+const FIRST_YEAR_GRADES           = ['Grade 1']; // Grade 7 removed — old student allowed
+const TRANSFEREE_ONLY_GRADES      = ['Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
+                                     'Grade 8','Grade 9','Grade 10','Grade 12'];
+const PREV_SCHOOL_REQUIRED_GRADES = ['Grade 7', 'Grade 11'];
 
 function lockOldStudent(locked) {
     const statusOld = document.getElementById('status_old');
@@ -536,12 +590,24 @@ function lockTransferee(locked, checked) {
 }
 
 function applyGradeRules() {
-    const grade   = gradeEl.value;
+    const grade     = gradeEl.value;
     const statusNew = document.getElementById('status_new');
     const statusOld = document.getElementById('status_old');
+    const g11Hint   = document.getElementById('grade11-hint');
 
-    if (FIRST_YEAR_GRADES.includes(grade)) {
-        // First year of level → always New, no Old, no Transferee
+    if (g11Hint) g11Hint.style.display = (grade === 'Grade 11') ? '' : 'none';
+
+    if (grade === 'Grade 11') {
+        // SHS first year: MMSC JHS completers → Old Student (SHS voucher)
+        //                 students from other schools → New Student
+        lockOldStudent(false);
+        if (!statusNew.checked && !statusOld.checked) {
+            statusNew.checked = true;
+        }
+        // transferee is handled by updateStatusUI based on which status is selected
+
+    } else if (FIRST_YEAR_GRADES.includes(grade)) {
+        // Grade 1 / Grade 7 → always New, no Old, no Transferee
         statusNew.checked = true;
         statusOld.checked = false;
         lockOldStudent(true);
@@ -569,6 +635,15 @@ function validateStep1(e) {
         warn.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
     }
+    if (PREV_SCHOOL_REQUIRED_GRADES.includes(gradeEl.value)) {
+        const prevSchool = document.querySelector('input[name="previous_school"]');
+        if (prevSchool && !prevSchool.value.trim()) {
+            e.preventDefault();
+            prevSchool.style.borderColor = '#ef4444';
+            prevSchool.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+    }
     return true;
 }
 
@@ -581,6 +656,7 @@ function validateStep1(e) {
     applyGradeRules();
     updateStatusUI();
     checkEscGradeWarning();
+    updatePrevSchoolVisibility();
 })();
 </script>
 

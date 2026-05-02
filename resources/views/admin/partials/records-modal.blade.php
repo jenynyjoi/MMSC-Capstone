@@ -10,9 +10,14 @@
     $isEscGrantee = $application->student_category === 'ESC Grantee';
     $appApproved  = $application->application_status === 'approved';
 
-    // Auto-resolve status: if applicant uploaded but not yet reviewed → pending
-    $autoStatus = fn($uploaded, $status) =>
-        ($uploaded && ($status ?? 'not_uploaded') === 'not_uploaded') ? 'pending' : ($status ?? 'not_uploaded');
+    // Auto-resolve status:
+    //   • uploaded + never reviewed + app approved  → approved
+    //   • uploaded + never reviewed                 → pending
+    //   • otherwise: use stored status
+    $autoStatus = fn($uploaded, $status, $approved) =>
+        ($uploaded && ($status ?? 'not_uploaded') === 'not_uploaded')
+            ? ($approved ? 'approved' : 'pending')
+            : ($status ?? 'not_uploaded');
 
     // Auto-check submitted: if nothing uploaded but application is approved
     $autoSubmitted = fn($uploaded, $submitted, $approved) =>
@@ -26,7 +31,7 @@
             'uploaded' => $application->psa_uploaded,
             'filename' => $application->psa_filename,
             'path'     => $application->psa_path,
-            'status'   => $autoStatus($application->psa_uploaded, $application->psa_status),
+            'status'   => $autoStatus($application->psa_uploaded, $application->psa_status, $appApproved),
             'submitted'=> $autoSubmitted($application->psa_uploaded, $application->psa_submitted ?? false, $appApproved),
         ],
         [
@@ -36,7 +41,7 @@
             'uploaded' => $application->report_card_uploaded,
             'filename' => $application->report_card_filename,
             'path'     => $application->report_card_path,
-            'status'   => $autoStatus($application->report_card_uploaded, $application->report_card_status),
+            'status'   => $autoStatus($application->report_card_uploaded, $application->report_card_status, $appApproved),
             'submitted'=> $autoSubmitted($application->report_card_uploaded, $application->report_card_submitted ?? false, $appApproved),
         ],
         [
@@ -46,7 +51,7 @@
             'uploaded' => $application->good_moral_uploaded,
             'filename' => $application->good_moral_filename,
             'path'     => $application->good_moral_path,
-            'status'   => $autoStatus($application->good_moral_uploaded, $application->good_moral_status),
+            'status'   => $autoStatus($application->good_moral_uploaded, $application->good_moral_status, $appApproved),
             'submitted'=> $autoSubmitted($application->good_moral_uploaded, $application->good_moral_submitted ?? false, $appApproved),
         ],
         [
@@ -56,7 +61,7 @@
             'uploaded' => $application->medical_uploaded ?? false,
             'filename' => $application->medical_filename ?? null,
             'path'     => $application->medical_path     ?? null,
-            'status'   => $autoStatus($application->medical_uploaded ?? false, $application->medical_status),
+            'status'   => $autoStatus($application->medical_uploaded ?? false, $application->medical_status, $appApproved),
             'submitted'=> $autoSubmitted($application->medical_uploaded ?? false, $application->medical_submitted ?? false, $appApproved),
         ],
     ];
@@ -163,6 +168,14 @@
                         </a>
                         @endif
                     </div>
+                    {{-- Uploaded & Approved quick-confirm checkbox --}}
+                    <label class="flex items-center gap-2 cursor-pointer mt-1">
+                        <input type="checkbox"
+                            :checked="docs.{{ $doc['key'] }}.status === 'approved'"
+                            @change="docs.{{ $doc['key'] }}.status = $event.target.checked ? 'approved' : 'pending'"
+                            class="rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">
+                        <span class="text-xs text-slate-600 dark:text-slate-400">Uploaded and Approved</span>
+                    </label>
                     @else
                     {{-- Not uploaded by applicant — admin options --}}
                     <div class="space-y-2">
@@ -267,9 +280,35 @@ function recordsModal() {
         _pendingApprove: false,
 
         init() {
-            window.openRecordsModal         = () => { this._pendingApprove = false; this.open = true; document.body.style.overflow = 'hidden'; };
-            window.openRecordsModalApprove  = () => { this._pendingApprove = true;  this.open = true; document.body.style.overflow = 'hidden'; };
-            window.closeRecordsModal        = () => { this.closeModal(); };
+            window.openRecordsModal = () => {
+                this._pendingApprove = false;
+                this.open = true;
+                document.body.style.overflow = 'hidden';
+            };
+            window.openRecordsModalApprove = () => {
+                this._pendingApprove = true;
+                Object.keys(this.docs).forEach(k => {
+                    // No digital upload → auto-check "Physical copy submitted"
+                    if (!this.docs[k].submitted && this.docs[k].status === 'not_uploaded') {
+                        this.docs[k].submitted = true;
+                    }
+                    // Uploaded but not yet reviewed → auto-mark "Uploaded and Approved"
+                    if (this.docs[k].status === 'pending') {
+                        this.docs[k].status = 'approved';
+                    }
+                });
+                this.open = true;
+                document.body.style.overflow = 'hidden';
+            };
+            window.closeRecordsModal = () => { this.closeModal(); };
+
+            // Sync status → 'pending' for any doc that is already marked as physically
+            // submitted but still shows 'not_uploaded' (e.g. auto-checked for approved apps)
+            Object.keys(this.docs).forEach(k => {
+                if (this.docs[k].submitted && this.docs[k].status === 'not_uploaded') {
+                    this.docs[k].status = 'pending';
+                }
+            });
         },
 
         closeModal() {

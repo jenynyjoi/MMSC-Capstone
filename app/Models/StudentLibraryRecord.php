@@ -31,7 +31,7 @@ class StudentLibraryRecord extends Model
     {
         return self::firstOrCreate(
             ['student_id' => $studentId, 'school_year' => $schoolYear],
-            ['status' => 'no_record']
+            ['status' => 'pending']
         );
     }
 
@@ -44,7 +44,7 @@ class StudentLibraryRecord extends Model
         $books = $this->books()->get();
 
         if ($books->isEmpty()) {
-            $this->status = 'no_record';
+            $this->status = 'pending';
         } else {
             $hasOverdue = $books->contains(
                 fn($b) => is_null($b->date_returned) && $b->due_date < $today

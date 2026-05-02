@@ -225,7 +225,7 @@
                         <th class="px-4 py-3 whitespace-nowrap">Student Name</th>
                         <th class="px-4 py-3 whitespace-nowrap">School Year</th>
                         <th class="px-4 py-3 whitespace-nowrap">Grade & Section</th>
-                        <th class="px-4 py-3 whitespace-nowrap">Issued Items</th>
+                        <th class="px-4 py-3 whitespace-nowrap">Assigned Items</th>
                         <th class="px-4 py-3 whitespace-nowrap text-center">Status</th>
                         <th class="px-4 py-3 whitespace-nowrap text-center">Actions</th>
                     </tr>
@@ -271,67 +271,78 @@
                         {{ $student->section_name ? \App\Models\Section::formatName($student->grade_level ?? '—', $student->section_name, $student->strand) : ($student->grade_level ?? '—') }}
                     </td>
                     @php
-                        $propRecord  = $student->propertyRecord;
-                        $propItems   = $propRecord ? $propRecord->items : collect();
-                        $issuedItems = $propItems->where('issued', true);
-                        $propStatus  = $propRecord?->status ?? 'for_issuance';
+                        $propRecord = $student->propertyRecord;
+                        $propItems  = $propRecord ? $propRecord->items : collect();
+                        $propStatus = $propRecord?->status ?? 'pending';
 
+                        // Build modal items: use existing record items or default list
                         $modalItems = $propItems->isNotEmpty()
                             ? $propItems->map(fn($i) => [
                                 'item_name'       => $i->item_name,
-                                'issued'          => (bool)$i->issued,
-                                'returned'        => (bool)$i->returned,
+                                'lost'            => (bool)$i->returned,  // returned col repurposed as lost
                                 'damaged'         => (bool)$i->damaged,
                                 'replacement_fee' => (float)$i->replacement_fee,
                               ])->values()->toArray()
                             : array_map(fn($n) => [
                                 'item_name'       => $n,
-                                'issued'          => false,
-                                'returned'        => false,
+                                'lost'            => false,
                                 'damaged'         => false,
                                 'replacement_fee' => 0,
                               ], \App\Models\StudentPropertyRecord::defaultItems());
+
+                        $lostCount    = $propItems->where('returned', true)->count();
+                        $damagedCount = $propItems->where('damaged', true)->count();
                     @endphp
 
-                    {{-- Issued Items --}}
+                    {{-- Assigned Items --}}
                     <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                        @if($issuedItems->isNotEmpty())
+                        @if($propItems->isNotEmpty())
                         <div class="flex flex-col gap-0.5">
-                            @foreach($issuedItems as $item)
+                            @foreach($propItems as $item)
                             <span class="inline-flex items-center gap-1">
-                                <iconify-icon icon="solar:check-circle-bold" width="10" class="text-blue-500"></iconify-icon>
-                                {{ $item->item_name }}
+                                @if($item->returned)
+                                    <iconify-icon icon="solar:close-circle-bold" width="10" class="text-red-500"></iconify-icon>
+                                    <span class="line-through text-red-400">{{ $item->item_name }}</span>
+                                    <span class="text-[10px] text-red-500 font-semibold">Lost</span>
+                                @elseif($item->damaged)
+                                    <iconify-icon icon="solar:danger-triangle-bold" width="10" class="text-amber-500"></iconify-icon>
+                                    <span class="text-amber-600">{{ $item->item_name }}</span>
+                                    <span class="text-[10px] text-amber-500 font-semibold">Damaged</span>
+                                @else
+                                    <iconify-icon icon="solar:check-circle-bold" width="10" class="text-blue-500"></iconify-icon>
+                                    {{ $item->item_name }}
+                                @endif
                             </span>
                             @endforeach
                         </div>
                         @else
-                        <span class="text-slate-400 italic text-[11px]">None issued</span>
+                        <span class="text-slate-400 italic text-[11px]">No items on record</span>
                         @endif
                     </td>
 
                     {{-- Status --}}
                     @php
                         $propBadge = [
-                            'for_issuance' => 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-                            'issued'       => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                            'cleared'      => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                            'overdue'      => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                            'pending' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                            'cleared' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                            'overdue' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                         ];
                         $propLabel = [
-                            'for_issuance' => 'For Issuance',
-                            'issued'       => 'Issued',
-                            'cleared'      => 'Cleared',
-                            'overdue'      => 'Overdue',
+                            'pending' => 'Pending',
+                            'cleared' => 'Cleared',
+                            'overdue' => 'Overdue',
                         ];
                     @endphp
                     <td class="px-4 py-3 text-center">
                         <div class="flex flex-col items-center gap-1">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
-                                {{ $propBadge[$propStatus] ?? $propBadge['for_issuance'] }}">
-                                {{ $propLabel[$propStatus] ?? 'For Issuance' }}
+                                {{ $propBadge[$propStatus] ?? $propBadge['pending'] }}">
+                                {{ $propLabel[$propStatus] ?? 'Pending' }}
                             </span>
-                            @if($propRecord?->issued_at)
-                            <span class="text-[10px] text-slate-400">{{ $propRecord->issued_at->format('M d, Y') }}</span>
+                            @if($lostCount || $damagedCount)
+                            <span class="text-[10px] text-red-400">
+                                {{ $lostCount ? "{$lostCount} lost" : '' }}{{ ($lostCount && $damagedCount) ? ', ' : '' }}{{ $damagedCount ? "{$damagedCount} damaged" : '' }}
+                            </span>
                             @endif
                         </div>
                     </td>
@@ -358,8 +369,8 @@
                                         'items'=> $modalItems,
                                     ]) }})"
                                     class="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    <iconify-icon icon="solar:box-bold" width="14" class="text-orange-500"></iconify-icon>
-                                    Issue / Return Items
+                                    <iconify-icon icon="solar:pen-bold" width="14" class="text-blue-500"></iconify-icon>
+                                    Edit Property Items
                                 </button>
                                 <button
                                     onclick="updatePropertyClearance({{ $student->id }}, 'cleared')"
@@ -368,10 +379,10 @@
                                     Mark Cleared
                                 </button>
                                 <button
-                                    onclick="updatePropertyClearance({{ $student->id }}, 'overdue')"
+                                    onclick="updatePropertyClearance({{ $student->id }}, 'pending')"
                                     class="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                    <iconify-icon icon="solar:danger-triangle-bold" width="14" class="text-red-500"></iconify-icon>
-                                    Mark Overdue
+                                    <iconify-icon icon="solar:clock-circle-bold" width="14" class="text-amber-500"></iconify-icon>
+                                    Mark Pending
                                 </button>
                                 <hr class="my-1 border-slate-100 dark:border-slate-700">
                                 <a href="{{ route('admin.student-records.profile', $student->id) }}"
@@ -484,7 +495,7 @@
     </div>
 </div>
 
-{{-- ── Issue Items Modal ── --}}
+{{-- ── Edit Property Items Modal ── --}}
 <div id="issue-modal"
      x-data="issueModal()"
      @open-issue-modal.window="open($event.detail)"
@@ -495,7 +506,7 @@
         {{-- Header --}}
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-dark-border">
             <div>
-                <h3 class="text-base font-semibold text-slate-800 dark:text-white">Issue / Return Items</h3>
+                <h3 class="text-base font-semibold text-slate-800 dark:text-white">Edit Property Items</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" x-text="studentName"></p>
             </div>
             <button @click="close()" class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
@@ -503,42 +514,44 @@
             </button>
         </div>
 
+        {{-- Info note --}}
+        <div class="mx-6 mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/10 px-3 py-2.5">
+            <iconify-icon icon="solar:info-circle-bold" width="14" class="text-amber-500 shrink-0 mt-0.5"></iconify-icon>
+            <p class="text-xs text-amber-700 dark:text-amber-400">All items are pre-assigned. Mark any that are <strong>lost</strong> or <strong>damaged</strong> — this will automatically set the student's status to Overdue.</p>
+        </div>
+
         {{-- Items Table --}}
-        <div class="px-6 py-4 max-h-[55vh] overflow-y-auto">
+        <div class="px-6 py-4 max-h-[50vh] overflow-y-auto">
             <table class="w-full text-xs">
                 <thead>
                     <tr class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-dark-border">
                         <th class="py-2 text-left">Item</th>
-                        <th class="py-2 text-center">Issued</th>
-                        <th class="py-2 text-center">Returned</th>
-                        <th class="py-2 text-center">Damaged</th>
-                        <th class="py-2 text-right">Rep. Fee (₱)</th>
+                        <th class="py-2 text-center w-16">Lost</th>
+                        <th class="py-2 text-center w-20">Damaged</th>
+                        <th class="py-2 text-right w-28">Rep. Fee (₱)</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50 dark:divide-dark-border">
                     <template x-for="(item, idx) in items" :key="idx">
-                        <tr class="hover:bg-slate-50/60 dark:hover:bg-white/[0.02]">
-                            <td class="py-2.5 pr-2 font-medium text-slate-700 dark:text-slate-300" x-text="item.item_name"></td>
+                        <tr :class="(item.lost || item.damaged) ? 'bg-red-50/50 dark:bg-red-900/10' : 'hover:bg-slate-50/60 dark:hover:bg-white/[0.02]'">
+                            <td class="py-2.5 pr-2 font-medium text-slate-700 dark:text-slate-300"
+                                :class="item.lost ? 'line-through text-red-400' : ''"
+                                x-text="item.item_name"></td>
                             <td class="py-2.5 text-center">
-                                <input type="checkbox" x-model="item.issued"
-                                    @change="if(!item.issued){ item.returned = false; item.damaged = false; }"
-                                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                            </td>
-                            <td class="py-2.5 text-center">
-                                <input type="checkbox" x-model="item.returned"
-                                    :disabled="!item.issued"
-                                    class="rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer disabled:opacity-40">
+                                <input type="checkbox" x-model="item.lost"
+                                    @change="if(item.lost){ item.damaged = false; }"
+                                    class="rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer">
                             </td>
                             <td class="py-2.5 text-center">
                                 <input type="checkbox" x-model="item.damaged"
-                                    :disabled="!item.issued"
-                                    class="rounded border-slate-300 text-red-500 focus:ring-red-500 cursor-pointer disabled:opacity-40">
+                                    @change="if(item.damaged){ item.lost = false; }"
+                                    class="rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer">
                             </td>
                             <td class="py-2.5 text-right">
                                 <input type="number" x-model.number="item.replacement_fee"
-                                    :disabled="!item.damaged"
+                                    :disabled="!item.lost && !item.damaged"
                                     min="0" step="0.01" placeholder="0.00"
-                                    class="w-20 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-xs text-right text-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40">
+                                    class="w-24 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-xs text-right text-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed">
                             </td>
                         </tr>
                     </template>
@@ -549,9 +562,15 @@
         {{-- Footer --}}
         <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-white/[0.01]">
             <div class="text-xs text-slate-500 dark:text-slate-400">
-                <span x-text="items.filter(i=>i.issued).length"></span> issued &middot;
-                <span x-text="items.filter(i=>i.returned).length"></span> returned &middot;
-                <span x-text="items.filter(i=>i.damaged).length"></span> damaged
+                <span class="text-red-600 font-semibold" x-show="items.filter(i=>i.lost).length > 0">
+                    <span x-text="items.filter(i=>i.lost).length"></span> lost
+                </span>
+                <span x-show="items.filter(i=>i.lost).length > 0 && items.filter(i=>i.damaged).length > 0"> · </span>
+                <span class="text-amber-600 font-semibold" x-show="items.filter(i=>i.damaged).length > 0">
+                    <span x-text="items.filter(i=>i.damaged).length"></span> damaged
+                </span>
+                <span x-show="items.filter(i=>i.lost).length === 0 && items.filter(i=>i.damaged).length === 0"
+                      class="text-green-600 font-semibold">All items in good condition</span>
             </div>
             <div class="flex gap-2">
                 <button @click="close()" type="button"
@@ -619,9 +638,11 @@
                 this.items       = JSON.parse(JSON.stringify(d.items));
                 this.saving      = false;
                 document.getElementById('issue-modal').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
             },
             close() {
                 document.getElementById('issue-modal').style.display = 'none';
+                document.body.style.overflow = '';
             },
             save() {
                 this.saving = true;

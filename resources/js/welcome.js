@@ -1,89 +1,114 @@
+document.addEventListener('DOMContentLoaded', () => {
 
-        // ---- Navbar scroll effect ----
-        const navbar = document.getElementById('navbar');
+    /* ── Navbar scroll ── */
+    const navbar = document.getElementById('navbar');
+    if (navbar) {
         window.addEventListener('scroll', () => {
             navbar.classList.toggle('navbar-scrolled', window.scrollY > 20);
         });
+    }
 
-        // ---- Background slideshow ----
-        const images = [
-            "{{ asset('images/img2.jpg') }}",
-            "{{ asset('images/img3.jpg') }}",
-            "{{ asset('images/img4.jpg') }}"
-        ];
+    /* ── Hero Carousel ── */
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots   = document.querySelectorAll('.dot-btn');
+    if (slides.length) {
+        let current = 0, timer;
 
-        const gradient = `linear-gradient(
-            to bottom,
-            rgba(13, 96, 184, 0.9) 0%,
-            rgba(26, 94, 158, 0.75) 25%,
-            rgba(48, 125, 183, 0.6) 50%,
-            rgba(141, 204, 238, 0.75) 75%,
-            rgba(233, 244, 250, 0.95) 100%
-        )`;
+        function goTo(n) {
+            slides[current].classList.remove('active');
+            dots[current].classList.remove('active');
+            current = (n + slides.length) % slides.length;
+            slides[current].classList.add('active');
+            dots[current].classList.add('active');
+        }
+        function next() { goTo(current + 1); }
+        function prev() { goTo(current - 1); }
+        function startTimer() { timer = setInterval(next, 5000); }
+        function resetTimer() { clearInterval(timer); startTimer(); }
 
-        let currentIndex = 0;
-        const landing = document.getElementById('landingPage');
-        const dots = document.querySelectorAll('.dot');
+        dots.forEach(d => d.addEventListener('click', () => { goTo(+d.dataset.index); resetTimer(); }));
 
-        function setBackground(i) {
-            currentIndex = i;
-            landing.style.backgroundImage = `${gradient}, url("${images[i]}")`;
-            dots.forEach((d, idx) => {
-                d.classList.toggle('active', idx === i);
-                d.classList.toggle('!w-6', idx === i);
-                d.classList.toggle('!bg-white', idx === i);
-                d.classList.toggle('bg-white/50', idx !== i);
+        const btnNext = document.getElementById('carouselNext');
+        const btnPrev = document.getElementById('carouselPrev');
+        if (btnNext) btnNext.addEventListener('click', () => { next(); resetTimer(); });
+        if (btnPrev) btnPrev.addEventListener('click', () => { prev(); resetTimer(); });
+
+        startTimer();
+    }
+
+    /* ── Scroll Reveal ── */
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ── Gallery Filter ── */
+    const filterBtns   = document.querySelectorAll('.filter-btn');
+    const galleryItems = document.querySelectorAll('.gallery-item');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            galleryItems.forEach(item => {
+                item.style.display = (filter === 'all' || item.dataset.category === filter) ? '' : 'none';
             });
+        });
+    });
+
+    /* ── Lightbox ── */
+    const lightbox = document.getElementById('galleryLightbox');
+    if (lightbox && galleryItems.length) {
+        const lbImage   = document.getElementById('lbImage');
+        const lbCaption = document.getElementById('lbCaption');
+        const lbClose   = document.getElementById('lbClose');
+        const lbPrev    = document.getElementById('lbPrev');
+        const lbNext    = document.getElementById('lbNext');
+        let visibleItems = [], lbIndex = 0;
+
+        function getVisible() {
+            return [...galleryItems].filter(el => el.style.display !== 'none');
+        }
+        function showImage() {
+            const item = visibleItems[lbIndex];
+            lbImage.src = item.dataset.src;
+            lbCaption.textContent = item.dataset.caption;
+        }
+        function open(item) {
+            visibleItems = getVisible();
+            lbIndex = visibleItems.indexOf(item);
+            if (lbIndex === -1) lbIndex = 0;
+            showImage();
+            lightbox.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function close() {
+            lightbox.classList.remove('open');
+            document.body.style.overflow = '';
         }
 
-        dots.forEach(dot => {
-            dot.addEventListener('click', () => setBackground(parseInt(dot.dataset.index)));
+        galleryItems.forEach(item => item.addEventListener('click', () => open(item)));
+        lbClose.addEventListener('click', close);
+        lightbox.addEventListener('click', e => { if (e.target === lightbox) close(); });
+        lbPrev.addEventListener('click', e => {
+            e.stopPropagation();
+            lbIndex = (lbIndex - 1 + visibleItems.length) % visibleItems.length;
+            showImage();
         });
-
-        setInterval(() => setBackground((currentIndex + 1) % images.length), 5000);
-
-
-
-        
-        // // ---- Navbar scroll effect ----
-        // const navbar = document.getElementById('navbar');
-        // window.addEventListener('scroll', () => {
-        //     navbar.classList.toggle('navbar-scrolled', window.scrollY > 20);
-        // });npm run dev
-
-        // // ---- Background slideshow ----
-        // const images = [
-        //     "{{ asset('images/landing bg.png') }}",
-        //     "{{ asset('images/schoolBG.png') }}",
-        //     "{{ asset('images/bg messiah.jpg') }}"
-        // ];
-
-        // const gradient = `linear-gradient(
-        //     to bottom,
-        //     rgba(13, 96, 184, 0.9) 0%,
-        //     rgba(26, 94, 158, 0.75) 25%,
-        //     rgba(48, 125, 183, 0.6) 50%,
-        //     rgba(141, 204, 238, 0.75) 75%,
-        //     rgba(233, 244, 250, 0.95) 100%
-        // )`;
-
-        // let currentIndex = 0;
-        // const landing = document.getElementById('landingPage');
-        // const dots = document.querySelectorAll('.dot');
-
-        // function setBackground(i) {
-        //     currentIndex = i;
-        //     landing.style.backgroundImage = `${gradient}, url("${images[i]}")`;
-        //     dots.forEach((d, idx) => {
-        //         d.classList.toggle('active', idx === i);
-        //         d.classList.toggle('!w-6', idx === i);
-        //         d.classList.toggle('!bg-white', idx === i);
-        //         d.classList.toggle('bg-white/50', idx !== i);
-        //     });
-        // }
-
-        // dots.forEach(dot => {
-        //     dot.addEventListener('click', () => setBackground(parseInt(dot.dataset.index)));
-        // });
-
-        // setInterval(() => setBackground((currentIndex + 1) % images.length), 5000);
+        lbNext.addEventListener('click', e => {
+            e.stopPropagation();
+            lbIndex = (lbIndex + 1) % visibleItems.length;
+            showImage();
+        });
+        document.addEventListener('keydown', e => {
+            if (!lightbox.classList.contains('open')) return;
+            if (e.key === 'Escape') close();
+            if (e.key === 'ArrowLeft') { lbIndex = (lbIndex - 1 + visibleItems.length) % visibleItems.length; showImage(); }
+            if (e.key === 'ArrowRight') { lbIndex = (lbIndex + 1) % visibleItems.length; showImage(); }
+        });
+    }
+    
+});

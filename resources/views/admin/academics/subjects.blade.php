@@ -45,7 +45,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
                         @foreach([
                             ['department','Department',[''=>'All','Mathematics'=>'Mathematics','Science'=>'Science','English'=>'English','Filipino'=>'Filipino','Social Studies'=>'Social Studies','MAPEH'=>'MAPEH','TLE'=>'TLE','Values Education'=>'Values Education']],
-                            ['grade_level','Grade Level',array_merge([''=>'All'],array_combine(['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'],['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12']))],
+                            ['grade_level','Grade Level',array_merge([''=>'All'],array_combine(['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'],['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12']))],
                             ['program_level','Program Level',[''=>'All','Elementary'=>'Elementary','Junior High School'=>'Junior High School','Senior High School'=>'Senior High School']],
                         ] as [$name,$label,$opts])
                         <div class="flex flex-col gap-1.5">
@@ -119,6 +119,10 @@
                                 <div x-show="open" x-on:click.outside="open=false"
                                      x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                                      class="absolute right-0 z-20 mt-1 w-36 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-dark-card shadow-lg py-1">
+                                    <button type="button" x-on:click="open=false" onclick="viewSubjectDetails({{ $s->id }})"
+                                        class="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <iconify-icon icon="solar:eye-bold" width="14" class="text-indigo-500"></iconify-icon> View Details
+                                    </button>
                                     <button type="button" x-on:click="open=false" onclick="editSubject({{ $s->id }})"
                                         class="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                         <iconify-icon icon="solar:pen-bold" width="14" class="text-blue-500"></iconify-icon> Edit
@@ -185,7 +189,8 @@
                     </div>
                 </div>
 
-                {{-- Grade quick filter buttons --}}
+
+
                 <div class="px-6 py-6 border-b border-slate-100 dark:border-dark-border">
                     <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Quick Filter — Grade Level</p>
                     <div class="flex flex-wrap gap-3">
@@ -1268,7 +1273,14 @@
             <input type="hidden" id="subject-id" value="">
 
             <div class="grid grid-cols-2 gap-4">
+          
                 <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Subject Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="sub-name" name="subject_name" placeholder="e.g. Mathematics 7"
+                        oninput="autoGenSubjectCode()"
+                        class="rounded-lg border border-slate-200 dark:border-dark-border dark:bg-dark-card dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                      <div class="flex flex-col gap-1.5">
                     <div class="flex items-center justify-between">
                         <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Subject Code <span class="text-red-500">*</span></label>
                         <span id="sub-code-auto-badge" class="text-[10px] font-semibold text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded px-1.5 py-0.5">AUTO</span>
@@ -1277,12 +1289,6 @@
                         oninput="subCodeManualEdit()"
                         class="rounded-lg border border-slate-200 dark:border-dark-border dark:bg-dark-card dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <p class="text-[10px] text-slate-400">Edit to override auto-generation.</p>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Subject Name <span class="text-red-500">*</span></label>
-                    <input type="text" id="sub-name" name="subject_name" placeholder="e.g. Mathematics 7"
-                        oninput="autoGenSubjectCode()"
-                        class="rounded-lg border border-slate-200 dark:border-dark-border dark:bg-dark-card dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -1296,7 +1302,7 @@
             <div class="grid grid-cols-2 gap-4">
                 @foreach([
                     ['sub-dept','department','Department',['Mathematics','Science','English','Filipino','Social Studies','MAPEH','TLE','Values Education','Other']],
-                    ['sub-grade','grade_level','Grade Level',['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12']],
+                    ['sub-grade','grade_level','Grade Level',['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12']],
                     ['sub-program','program_level','Program Level',['Elementary','Junior High School','Senior High School']],
                     ['sub-type','subject_type','Subject Type',['Core','Specialized','Applied','Elective','Not Applicable']],
                 ] as [$eid,$ename,$elabel,$eopts])
@@ -1394,6 +1400,114 @@
                     class="px-6 py-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">CANCEL</button>
             </div>
         </form>
+    </div>
+</div>
+
+{{-- ══ SUBJECT DETAIL MODAL ══ --}}
+<div id="subject-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeAcadModal('subject-detail-modal')"></div>
+    <div class="relative w-full max-w-xl mx-4 rounded-2xl bg-white dark:bg-dark-card shadow-2xl" style="max-height:90vh;overflow-y:auto">
+
+        {{-- Header --}}
+        <div class="bg-[#0d4c8f] px-6 py-4 flex items-center justify-between sticky top-0 z-10 rounded-t-2xl">
+            <div class="flex items-center gap-3 min-w-0">
+                <iconify-icon icon="solar:notebook-bold" width="18" class="text-white/80 shrink-0"></iconify-icon>
+                <div class="min-w-0">
+                    <h3 id="sd-title" class="text-white text-sm font-bold truncate">—</h3>
+                    <p id="sd-code" class="text-white/60 text-xs font-mono mt-0.5">—</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 ml-4">
+                <span id="sd-status-badge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full"></span>
+                <button onclick="closeAcadModal('subject-detail-modal')" class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 text-sm">✕</button>
+            </div>
+        </div>
+
+        <div class="px-6 py-5 space-y-5">
+
+            {{-- Description --}}
+            <div id="sd-desc-wrap" class="hidden rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-dark-border px-4 py-3">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                <p id="sd-desc" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">—</p>
+            </div>
+
+            {{-- Classification --}}
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Classification</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Department</p>
+                        <p id="sd-dept" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Subject Type</p>
+                        <p id="sd-type" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Grade Level</p>
+                        <p id="sd-grade" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Program Level</p>
+                        <p id="sd-program" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- SHS Track / Strand --}}
+            <div id="sd-shs-wrap" class="hidden">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Senior High School</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Track</p>
+                        <p id="sd-track" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                        <p class="text-[10px] text-slate-400 mb-0.5">Strand</p>
+                        <p id="sd-strand" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Schedule Configuration --}}
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Schedule Configuration</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3 text-center">
+                        <p id="sd-hpm" class="text-lg font-bold text-[#0d4c8f]">—</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Hours / Meeting</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3 text-center">
+                        <p id="sd-mpw" class="text-lg font-bold text-[#0d4c8f]">—</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Meetings / Week</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 px-4 py-3 text-center">
+                        <p id="sd-hpw" class="text-lg font-bold text-indigo-600 dark:text-indigo-400">—</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Hours / Week</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Semester --}}
+            <div id="sd-sem-wrap" class="hidden">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Semester</p>
+                <div class="rounded-xl border border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-white/5 px-4 py-3">
+                    <p class="text-[10px] text-slate-400 mb-0.5">Default Semester</p>
+                    <p id="sd-sem" class="text-xs font-semibold text-slate-700 dark:text-slate-200">—</p>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Footer actions --}}
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 dark:border-dark-border">
+            <button type="button" id="sd-edit-btn"
+                class="flex items-center gap-2 rounded-lg bg-[#0d4c8f] hover:bg-blue-800 px-5 py-2 text-xs font-semibold text-white transition-colors">
+                <iconify-icon icon="solar:pen-bold" width="13"></iconify-icon> Edit Subject
+            </button>
+            <button type="button" onclick="closeAcadModal('subject-detail-modal')"
+                class="rounded-lg border border-slate-200 px-5 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">Close</button>
+        </div>
     </div>
 </div>
 
@@ -1829,11 +1943,11 @@ function _isSHS(grade) {
 }
 
 const _GRADES_BY_PROGRAM = {
-    'Elementary':         ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'],
+    'Elementary':         ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'],
     'Junior High School': ['Grade 7','Grade 8','Grade 9','Grade 10'],
     'Senior High School': ['Grade 11','Grade 12'],
 };
-const _ALL_GRADES = ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
+const _ALL_GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 
 function onGradeChange() {
     const grade = document.getElementById('sub-grade').value;
@@ -1849,7 +1963,7 @@ function onGradeChange() {
         progSel.value = 'Senior High School';
     } else if (['Grade 7','Grade 8','Grade 9','Grade 10'].includes(grade)) {
         progSel.value = 'Junior High School';
-    } else if (['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(grade)) {
+    } else if (['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(grade)) {
         progSel.value = 'Elementary';
     }
     autoGenSubjectCode();
@@ -1923,6 +2037,74 @@ function toggleSemester(checked) {
 }
 
 // ── SUBJECT CRUD ──────────────────────────────────────────
+function viewSubjectDetails(id) {
+    fetch(`${BASE}/subjects/${id}`)
+        .then(r => r.json())
+        .then(({ subject: s }) => {
+            // Header
+            document.getElementById('sd-title').textContent = s.subject_name;
+            document.getElementById('sd-code').textContent  = s.subject_code || '—';
+
+            // Status badge
+            const badge = document.getElementById('sd-status-badge');
+            if (s.is_active) {
+                badge.textContent  = 'Active';
+                badge.className    = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700';
+            } else {
+                badge.textContent  = 'Inactive';
+                badge.className    = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500';
+            }
+            badge.classList.remove('hidden');
+
+            // Description
+            const descWrap = document.getElementById('sd-desc-wrap');
+            if (s.description) {
+                document.getElementById('sd-desc').textContent = s.description;
+                descWrap.classList.remove('hidden');
+            } else {
+                descWrap.classList.add('hidden');
+            }
+
+            // Classification
+            document.getElementById('sd-dept').textContent    = s.department    || '—';
+            document.getElementById('sd-type').textContent    = s.subject_type  || '—';
+            document.getElementById('sd-grade').textContent   = s.grade_level   || '—';
+            document.getElementById('sd-program').textContent = s.program_level || '—';
+
+            // SHS track / strand
+            const shsWrap = document.getElementById('sd-shs-wrap');
+            if (s.track || s.strand) {
+                document.getElementById('sd-track').textContent  = s.track  || '—';
+                document.getElementById('sd-strand').textContent = s.strand || '—';
+                shsWrap.classList.remove('hidden');
+            } else {
+                shsWrap.classList.add('hidden');
+            }
+
+            // Schedule config
+            document.getElementById('sd-hpm').textContent = s.hours_per_meeting ?? '—';
+            document.getElementById('sd-mpw').textContent = s.meetings_per_week ?? '—';
+            document.getElementById('sd-hpw').textContent = s.hours_per_week    ?? '—';
+
+            // Semester
+            const semWrap = document.getElementById('sd-sem-wrap');
+            if (s.has_semester) {
+                document.getElementById('sd-sem').textContent = s.default_semester || 'Both';
+                semWrap.classList.remove('hidden');
+            } else {
+                semWrap.classList.add('hidden');
+            }
+
+            // Edit button wires to editSubject
+            document.getElementById('sd-edit-btn').onclick = () => {
+                closeAcadModal('subject-detail-modal');
+                editSubject(s.id);
+            };
+
+            openAcadModal('subject-detail-modal');
+        }).catch(() => showToast('Failed to load subject details.', 'error'));
+}
+
 function editSubject(id) {
     fetch(`${BASE}/subjects/${id}`)
         .then(r=>r.json())
@@ -2470,9 +2652,12 @@ function curriculumApp() {
 
         get gradesForProgram() {
             const map = {
-                'Elementary':         ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'],
+                'Elementary':         ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'],
                 'Junior High School': ['Grade 7','Grade 8','Grade 9','Grade 10'],
-                'Senior High School': ['Grade 11','Grade 12'],
+                'Senior High School': [
+                    'Grade 11 - STEM','Grade 11 - HUMSS','Grade 11 - ABM','Grade 11 - GAS','Grade 11 - ICT',
+                    'Grade 12 - STEM','Grade 12 - HUMSS','Grade 12 - ABM','Grade 12 - GAS','Grade 12 - ICT',
+                ],
             };
             return map[this.assignForm.program_level] || [];
         },
@@ -2622,7 +2807,7 @@ function curriculumApp() {
         },
 
         defaultProgram(g) {
-            if (['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(g)) return 'Elementary';
+            if (['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'].includes(g)) return 'Elementary';
             if (['Grade 7','Grade 8','Grade 9','Grade 10'].includes(g)) return 'Junior High School';
             return 'Senior High School';
         },

@@ -21,6 +21,28 @@ class TeacherProfile extends Model
         'grade_levels'    => 'array',
     ];
 
+    protected static $nameFields = ['first_name', 'last_name', 'middle_name'];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+        static::saving(function (self $model) {
+            foreach (self::$nameFields as $field) {
+                if (!empty($model->$field)) {
+                    $model->$field = strtoupper($model->$field);
+                }
+            }
+        });
+    }
+
+    public function getFormattedNameAttribute(): string
+    {
+        $last  = strtoupper($this->last_name  ?? '');
+        $first = strtoupper($this->first_name ?? '');
+        $mi    = $this->middle_name ? ' ' . strtoupper(substr($this->middle_name, 0, 1)) . '.' : '';
+        return $last . ', ' . $first . $mi;
+    }
+
     public function user()
     {
         return $this->belongsTo(\App\Models\User::class);

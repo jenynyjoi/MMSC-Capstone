@@ -88,4 +88,9 @@ class Section extends Model
     {
         return $this->hasOne(SectionAllocationConfig::class, 'section_id');
     }
+
+    public function subjectAllocations()
+    {
+        return $this->hasMany(\App\Models\SubjectAllocation::class, 'section_id');
+    }
 }

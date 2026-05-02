@@ -6,80 +6,6 @@
 
 @section('content')
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
-    body { font-family: 'Montserrat', sans-serif; }
-
-    /* ── Hero Carousel ── */
-    #landingPage { font-family: 'Montserrat', sans-serif; }
-    .hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
-    .hero-slide.active { opacity: 1; }
-
-    .carousel-arrow {
-        position: absolute; top: 50%; z-index: 20;
-        transform: translateY(-50%);
-        width: 42px; height: 42px;
-        background: rgba(255,255,255,0.14);
-        border: 1.5px solid rgba(255,255,255,0.32);
-        border-radius: 50%; color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: background 0.2s;
-        backdrop-filter: blur(4px);
-    }
-    .carousel-arrow:hover { background: rgba(255,255,255,0.26); }
-    .carousel-arrow.prev { left: 20px; }
-    .carousel-arrow.next { right: 20px; }
-
-    .dot-btn { width: 10px; height: 10px; border-radius: 9999px; background: rgba(255,255,255,0.40); border: none; cursor: pointer; padding: 0; transition: all 0.3s; }
-    .dot-btn.active { width: 28px; background: #55afe1; }
-
-    .btn-apply {
-        display: inline-flex; align-items: center; gap: 10px;
-        background: #55afe1; color: #fff;
-        font-family: 'Montserrat', sans-serif; font-weight: 750;
-        font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase;
-        padding: 13px 28px; border-radius: 10px; text-decoration: none;
-        transition: background 0.2s, transform 0.15s;
-    }
-    .btn-apply:hover { background: #3d9fd6; transform: translateY(-1px); }
-
-    .btn-outline {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: transparent; color: #fff;
-        font-family: 'Montserrat', sans-serif; font-weight: 700;
-        font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase;
-        padding: 12px 28px; border: 2px solid rgba(255,255,255,0.65); border-radius: 10px;
-        text-decoration: none; transition: background 0.2s, border-color 0.2s, transform 0.15s;
-    }
-    .btn-outline:hover { background: rgba(255,255,255,0.10); border-color: #fff; transform: translateY(-1px); }
-
-    .program-card { transition: transform 0.25s, box-shadow 0.25s; }
-    .program-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.10); }
-
-    .ticker-wrap { overflow: hidden; }
-    .ticker-inner { display: flex; gap: 3rem; white-space: nowrap; animation: ticker 30s linear infinite; }
-    .ticker-inner:hover { animation-play-state: paused; }
-    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-
-    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-    .stat-item { animation: fadeUp 0.6s ease both; }
-
-    .mv-card {
-        border-top: 4px solid #55afe1;
-        background: #fff;
-        border-radius: 12px;
-        padding: 2rem 1.75rem;
-        box-shadow: 0 2px 16px rgba(12,78,146,0.07);
-        transition: transform 0.25s, box-shadow 0.25s;
-    }
-    .mv-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(12,78,146,0.12); }
-</style>
-
-
-
 {{-- ══════════════ HERO CAROUSEL ══════════════ --}}
 <section id="landingPage" class="relative overflow-hidden" style="height:calc(100vh - 34px); min-height:480px;">
 
@@ -115,6 +41,13 @@
         <a href="#programs" class="btn-outline">Explore Programs</a>
     </div>
 </div>
+    <button class="carousel-arrow prev" id="carouselPrev" aria-label="Previous slide">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="carousel-arrow next" id="carouselNext" aria-label="Next slide">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+
     <div class="absolute bottom-8 left-1/2 z-10 flex items-center gap-2" style="transform:translateX(-50%);">
         <button class="dot-btn active" data-index="0" aria-label="Slide 1"></button>
         <button class="dot-btn" data-index="1" aria-label="Slide 2"></button>
@@ -194,66 +127,7 @@
         </div>
     </div>
 </section>
-<!-- 
-{{-- ══════════════ MISSION & VISION ══════════════ --}}
-<section class="py-20 reveal" style="background:#f1f5f9;">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div class="text-center mb-12">
-            <p style="font-family:'Montserrat',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#55afe1; margin-bottom:0.5rem;">Who We Are</p>
-            <h2 style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:clamp(1.6rem,3vw,2.2rem); color:#0c2340; margin:0;">Our Mission &amp; Vision</h2>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            {{-- Mission --}}
-            <div class="mv-card">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:1rem;">
-                    <div style="width:44px; height:44px; background:#e8f4fd; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <svg width="22" height="22" fill="none" stroke="#55afe1" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                    </div>
-                    <h3 style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.05rem; color:#0c2340; margin:0;">Our Mission</h3>
-                </div>
-                <p style="font-family:'Montserrat',sans-serif; font-size:0.9rem; color:#475569; line-height:1.8; margin:0;">
-                    To provide holistic, Christ-centered education that empowers every learner — nurturing academic excellence, moral integrity, and a compassionate heart — so they may serve God, family, and community with purpose.
-                </p>
-            </div>
-
-            {{-- Vision --}}
-            <div class="mv-card">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:1rem;">
-                    <div style="width:44px; height:44px; background:#e8f4fd; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <svg width="22" height="22" fill="none" stroke="#55afe1" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </div>
-                    <h3 style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.05rem; color:#0c2340; margin:0;">Our Vision</h3>
-                </div>
-                <p style="font-family:'Montserrat',sans-serif; font-size:0.9rem; color:#475569; line-height:1.8; margin:0;">
-                    My Messiah School of Cavite envisions a community of lifelong learners and God-fearing leaders — equipped with knowledge, faith, and character — ready to make a lasting difference in an ever-changing world.
-                </p>
-            </div>
-
-        </div> -->
-
-        <!-- {{-- Core Values --}}
-        <div class="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            @php
-                $values = [
-                    ['icon'=>'✝', 'label'=>'Faith'],
-                    ['icon'=>'⭐', 'label'=>'Excellence'],
-                    ['icon'=>'🤝', 'label'=>'Service'],
-                    ['icon'=>'💡', 'label'=>'Integrity'],
-                ];
-            @endphp
-            @foreach($values as $v)
-            <div style="background:#fff; border-radius:10px; padding:1.25rem 0.75rem; box-shadow:0 1px 8px rgba(12,78,146,0.07);">
-                <span style="font-size:1.5rem; display:block; margin-bottom:0.5rem;">{{ $v['icon'] }}</span>
-                <p style="font-family:'Montserrat',sans-serif; font-weight:700; font-size:0.78rem; color:#0c2340; margin:0; text-transform:uppercase; letter-spacing:0.1em;">{{ $v['label'] }}</p>
-            </div>
-            @endforeach
-        </div> -->
-
-    </div> 
-</section>
 
 
 {{-- ══════════════ PROGRAMS ══════════════ --}}
@@ -352,7 +226,132 @@
     </div>
 </section>
 
+{{-- ══════════════ 0. PHOTO GALLERY ══════════════ --}}
 
+<section class="py-20 bg-white dark:bg-slate-900 reveal">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+ 
+        {{-- Header --}}
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+            <div>
+                <p style="font-family:'Montserrat',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#55afe1; margin-bottom:0.4rem;">School Life</p>
+                <h2 class="dark:text-white" style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:clamp(1.6rem,3vw,2.2rem); color:#0c2340; margin:0;"> Highlights </h2>
+            </div>
+            <a href="{{ asset('public/images') }}" class="text-sm font-bold hover:underline shrink-0" style="color:#55afe1; font-family:'Montserrat',sans-serif;">View full Highlights  →</a>
+        </div>
+ 
+        {{-- Filter Tabs --}}
+        <div class="flex flex-wrap gap-2 mb-8" id="galleryFilters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="academics">Academics</button>
+            <button class="filter-btn" data-filter="events">Events</button>
+            <button class="filter-btn" data-filter="sports">Sports</button>
+            <button class="filter-btn" data-filter="campus">Campus</button>
+        </div>
+ 
+        {{-- Gallery Grid --}}
+        @php
+            $gallery = [
+                [
+                    'src'     => asset('images/img8.jpg'),
+                    'alt'     => 'Students during Recognition Day ceremony',
+                    'caption' => 'Recognition Day 2024',
+                    'category'=> 'events',
+                ],
+                [
+                    'src'     => asset('images/img2.jpg'),
+                    'alt'     => 'Science laboratory class in session',
+                    'caption' => 'Science Lab — Grade 9',
+                    'category'=> 'academics',
+                ],
+                [
+                    'src'     => asset('images/img3.jpg'),
+                    'alt'     => 'Students playing basketball during PE class',
+                    'caption' => 'Inter-level Basketball Tournament',
+                    'category'=> 'sports',
+                ],
+                [
+                    'src'     => asset('images/img4.jpg'),
+                    'alt'     => 'School campus aerial view',
+                    'caption' => 'MMSC Campus',
+                    'category'=> 'campus',
+                ],
+                [
+                    'src'     => asset('images/img5.jpg'),
+                    'alt'     => 'Students presenting at the Science Fair',
+                    'caption' => 'Regional Science Fair Winners',
+                    'category'=> 'academics',
+                ],
+                [
+                    'src'     => asset('images/img6.jpg'),
+                    'alt'     => 'Foundation Day celebration and parade',
+                    'caption' => 'Foundation Day 2024',
+                    'category'=> 'events',
+                ],
+                [
+                    'src'     => asset('images/img7.jpg'),
+                    'alt'     => 'Students at the school library',
+                    'caption' => 'School Library',
+                    'category'=> 'campus',
+                ],
+                [
+                    'src'     => asset('images/img8.jpg'),
+                    'alt'     => 'Cheer dance competition performance',
+                    'caption' => 'Cheer Dance Competition',
+                    'category'=> 'events',
+                ],
+                [
+                    'src'     => asset('images/img9.jpg'),
+                    'alt'     => 'Cheer dance competition performance',
+                    'caption' => 'Cheer Dance Competition',
+                    'category'=> 'events',
+                ],
+                        
+            ];
+        @endphp
+ 
+        <div class="gallery-grid" id="galleryGrid">
+            @foreach($gallery as $i => $photo)
+            <div class="gallery-item"
+                 data-category="{{ $photo['category'] }}"
+                 data-index="{{ $i }}"
+                 data-src="{{ $photo['src'] }}"
+                 data-caption="{{ $photo['caption'] }}">
+                <img src="{{ $photo['src'] }}"
+                     alt="{{ $photo['alt'] }}"
+                     loading="{{ $i < 4 ? 'eager' : 'lazy' }}">
+                <div class="gallery-overlay">
+                    <p>{{ $photo['caption'] }}</p>
+                </div>
+            </div>
+            @endforeach
+        </div>
+ 
+        {{-- Show More Button --}}
+        <div class="text-center mt-10">
+            <a href="{{ asset('public/images') }}"
+               class="inline-flex items-center gap-2 font-bold text-sm px-7 py-3 rounded-xl border-2 transition-all hover:opacity-80"
+               style="border-color:#55afe1; color:#55afe1; font-family:'Montserrat',sans-serif;">
+                See All Photos
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+ 
+    </div>
+</section>
+ 
+{{-- ── Lightbox ── --}}
+<div id="galleryLightbox" role="dialog" aria-modal="true" aria-label="Photo lightbox">
+    <button id="lbClose" aria-label="Close">&times;</button>
+    <button id="lbPrev" aria-label="Previous photo">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <img id="lbImage" src="" alt="">
+    <button id="lbNext" aria-label="Next photo">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <div id="lbCaption"></div>
+</div>
 
 
 {{-- ══════════════ FINANCIAL ASSISTANCE & INCENTIVES ══════════════ --}}
@@ -455,6 +454,74 @@
     </div>
 </section>
 
+{{-- ══════════════ TESTIMONIALS ══════════════ --}}
+<section class="py-20 bg-white dark:bg-slate-900 reveal">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="text-center mb-12">
+            <p style="font-family:'Montserrat',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:#55afe1; margin-bottom:0.4rem;">What They Say</p>
+            <h2 class="dark:text-white" style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:clamp(1.6rem,3vw,2.2rem); color:#0c2340; margin:0 0 0.5rem;">From Our Community</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto leading-relaxed" style="font-family:'Montserrat',sans-serif;">Real words from the parents, students, and teachers who make MMSC home.</p>
+        </div>
+
+        @php
+            $testimonials = [
+                [
+                    'quote'    => 'MMSC didn\'t just teach my daughter lessons — it taught her values. The teachers truly care about each child as a whole person, not just a student.',
+                    'name'     => 'Maria L.',
+                    'role'     => 'Parent — Grade 5',
+                    'initials' => 'ML',
+                    'avatar_bg'=> '#dbeafe', 'avatar_color' => '#1d4ed8',
+                ],
+                [
+                    'quote'    => 'The SHS TVL program prepared me so well for college. I felt ahead of my classmates in practical skills from day one at university.',
+                    'name'     => 'Joshua R.',
+                    'role'     => 'MMSC Alumnus, Batch 2023',
+                    'initials' => 'JR',
+                    'avatar_bg'=> '#dcfce7', 'avatar_color' => '#15803d',
+                ],
+                [
+                    'quote'    => 'As a teacher here for 6 years, I love the collaborative spirit. Administration supports us and the students motivate me every single day.',
+                    'name'     => 'Ms. Ana S.',
+                    'role'     => 'Science Teacher, JHS',
+                    'initials' => 'AS',
+                    'avatar_bg'=> '#f3e8ff', 'avatar_color' => '#7e22ce',
+                ],
+                [
+                    'quote'    => 'Enrolling my son at MMSC was one of the best decisions we made as a family. He\'s grown not just academically but in his faith and character.',
+                    'name'     => 'Roberto M.',
+                    'role'     => 'Parent — Grade 8',
+                    'initials' => 'RM',
+                    'avatar_bg'=> '#fef3c7', 'avatar_color' => '#92400e',
+                ],
+            ];
+        @endphp
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            @foreach($testimonials as $t)
+            <div class="program-card bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-6 flex flex-col gap-4 shadow-sm">
+                {{-- Quote mark --}}
+                <span style="font-size:2rem; line-height:1; color:#55afe1; font-family:Georgia,serif;">&ldquo;</span>
+                {{-- Quote --}}
+                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1" style="font-family:'Montserrat',sans-serif;">{{ $t['quote'] }}</p>
+                {{-- Author --}}
+                <div class="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                         style="background:{{ $t['avatar_bg'] }}; color:{{ $t['avatar_color'] }}; font-family:'Montserrat',sans-serif;">
+                        {{ $t['initials'] }}
+                    </div>
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-white text-sm" style="font-family:'Montserrat',sans-serif;">{{ $t['name'] }}</p>
+                        <p class="text-xs text-slate-400" style="font-family:'Montserrat',sans-serif;">{{ $t['role'] }}</p>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+    </div>
+</section>
+
 
 {{-- ══════════════ CTA BANNER ══════════════ --}}
 <section class="py-20 reveal" style="background:linear-gradient(to bottom, #0d4c8f 21%, #093462 53%, #041629 93%);">
@@ -473,46 +540,3 @@
 </section>
 
 @endsection
-
-
-@push('scripts')
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-
-    /* ── Carousel ── */
-    const slides = document.querySelectorAll('.hero-slide');
-    const dots   = document.querySelectorAll('.dot-btn');
-    let current  = 0, timer;
-
-    function goTo(n) {
-        slides[current].classList.remove('active');
-        dots[current].classList.remove('active');
-        current = (n + slides.length) % slides.length;
-        slides[current].classList.add('active');
-        dots[current].classList.add('active');
-    }
-
-    function next() { goTo(current + 1); }
-    function prev() { goTo(current - 1); }
-    function startTimer() { timer = setInterval(next, 5000); }
-    function resetTimer() { clearInterval(timer); startTimer(); }
-
-    dots.forEach(d => d.addEventListener('click', () => { goTo(+d.dataset.index); resetTimer(); }));
-
-    const btnNext = document.getElementById('carouselNext');
-    const btnPrev = document.getElementById('carouselPrev');
-    if (btnNext) btnNext.addEventListener('click', () => { next(); resetTimer(); });
-    if (btnPrev) btnPrev.addEventListener('click', () => { prev(); resetTimer(); });
-
-    startTimer();
-
-    /* ── Scroll reveal ── */
-    const io = new IntersectionObserver(entries => {
-        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-});
-</script>
-@endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Subject;
 use App\Models\SubjectAllocation;
 use App\Models\SubjectSchedule;
 use App\Models\TeacherLoad;
@@ -100,10 +101,27 @@ class TeacherController extends Controller
         // ── Assign Teacher tab data ───────────────────────────
         $allocQuery = Section::where('school_year', $schoolYear)
             ->when($request->alloc_grade, fn($q) => $q->where('grade_level', $request->alloc_grade))
+            ->when($request->alloc_section, fn($q) => $q->where('section_name', $request->alloc_section))
             ->when($request->alloc_search, fn($q) => $q->where(function ($sq) use ($request) {
                 $sq->where('section_name', 'like', '%'.$request->alloc_search.'%')
                    ->orWhere('grade_level',   'like', '%'.$request->alloc_search.'%');
             }))
+            ->when($request->alloc_status, function ($q) use ($request, $schoolYear) {
+                match ($request->alloc_status) {
+                    'fully_assigned' => $q
+                        ->whereHas('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear))
+                        ->whereDoesntHave('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear)->whereNull('teacher_id')),
+                    'partial' => $q
+                        ->whereHas('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear)->whereNotNull('teacher_id'))
+                        ->whereHas('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear)->whereNull('teacher_id')),
+                    'unassigned' => $q
+                        ->whereHas('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear))
+                        ->whereDoesntHave('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear)->whereNotNull('teacher_id')),
+                    'no_subjects' => $q
+                        ->whereDoesntHave('subjectAllocations', fn($sq) => $sq->where('school_year', $schoolYear)),
+                    default => null,
+                };
+            })
             ->orderBy('grade_level')->orderBy('section_name');
         $allocations = $allocQuery->paginate(10, ['*'], 'alloc_page')->withQueryString();
 
@@ -121,9 +139,29 @@ class TeacherController extends Controller
         $allocGradeLevels = Section::where('school_year', $schoolYear)
             ->distinct()->orderBy('grade_level')->pluck('grade_level');
 
+        $allocSectionNames = Section::where('school_year', $schoolYear)
+            ->when($request->alloc_grade, fn($q) => $q->where('grade_level', $request->alloc_grade))
+            ->orderBy('grade_level')->orderBy('section_name')
+            ->pluck('section_name', 'section_name');
+
+        $totalSubjects  = $allocCounts->sum();
+        $totalAssigned  = $teacherCounts->sum();
+        $totalSections  = Section::where('school_year', $schoolYear)->count();
+        $assignStats = [
+            'total_sections'  => $totalSections,
+            'total_subjects'  => $totalSubjects,
+            'assigned'        => $totalAssigned,
+            'unassigned'      => $totalSubjects - $totalAssigned,
+        ];
+
+        $subjectSpecializations = Subject::where('is_active', true)
+            ->orderBy('subject_name')
+            ->pluck('subject_name');
+
         return view('admin.teachers', compact(
             'teachers', 'stats', 'loads', 'loadStats', 'schoolYear', 'unassignedSections',
-            'allocations', 'allocCounts', 'teacherCounts', 'allocGradeLevels'
+            'allocations', 'allocCounts', 'teacherCounts', 'allocGradeLevels', 'allocSectionNames', 'assignStats',
+            'subjectSpecializations'
         ));
     }
 
@@ -153,9 +191,10 @@ class TeacherController extends Controller
             'max_weekly_hours'  => 'nullable|numeric|min:1',
         ]);
 
-        $firstName  = trim($request->first_name);
-        $lastName   = trim($request->last_name);
-        $fullName   = $firstName . ' ' . $lastName;
+        $firstName  = strtoupper(trim($request->first_name));
+        $lastName   = strtoupper(trim($request->last_name));
+        $mi         = $request->middle_name ? ' ' . strtoupper(substr(trim($request->middle_name), 0, 1)) . '.' : '';
+        $fullName   = $lastName . ', ' . $firstName . $mi;
         $instEmail  = $this->generateInstitutionalEmail($firstName, $lastName);
         $tempPass   = Str::random(10);
         $personalEmail = $request->personal_email;
@@ -325,7 +364,7 @@ TEXT;
                 'id'                    => $profile->id,
                 'user_id'               => $profile->user_id,
                 'teacher_id_code'       => $profile->teacher_id_code,
-                'name'                  => $profile->user?->name,
+                'name'                  => $profile->formatted_name,
                 'email'                 => $profile->user?->email,
                 'first_name'            => $profile->first_name,
                 'last_name'             => $profile->last_name,
@@ -375,9 +414,10 @@ TEXT;
             'max_weekly_hours'  => 'nullable|numeric|min:1',
         ]);
 
-        $firstName = trim($request->first_name);
-        $lastName  = trim($request->last_name);
-        $fullName  = $firstName . ' ' . $lastName;
+        $firstName = strtoupper(trim($request->first_name));
+        $lastName  = strtoupper(trim($request->last_name));
+        $mi        = $request->middle_name ? ' ' . strtoupper(substr(trim($request->middle_name), 0, 1)) . '.' : '';
+        $fullName  = $lastName . ', ' . $firstName . $mi;
 
         DB::transaction(function () use ($request, $profile, $firstName, $lastName, $fullName) {
             $profile->user->update([
@@ -408,7 +448,7 @@ TEXT;
                     if ($newSection) {
                         $newSection->update([
                             'homeroom_adviser_id'   => $profile->user_id,
-                            'homeroom_adviser_name' => $request->name,
+                            'homeroom_adviser_name' => $fullName,
                             'adviser_status'        => 'assigned',
                         ]);
                         $advisoryClass = $newSection->display_name;

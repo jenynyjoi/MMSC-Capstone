@@ -66,37 +66,58 @@
                 <iconify-icon icon="solar:filter-linear" width="14"></iconify-icon> Filter by
             </div>
             <form method="GET" action="{{ route('admin.student-records.list') }}">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-4">
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-medium text-slate-500 dark:text-slate-400">School Year</label>
                         <div class="relative">
                             <select name="school_year" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
-                                <option value="2026-2027" {{ request('school_year','2026-2027')==='2026-2027'?'selected':'' }}>SY 2026-2027</option>
-                                <option value="2025-2026" {{ request('school_year')==='2025-2026'?'selected':'' }}>SY 2025-2026</option>
-                                <option value="2024-2025" {{ request('school_year')==='2024-2025'?'selected':'' }}>SY 2024-2025</option>
+                                @foreach(\App\Models\SchoolYear::orderByDesc('start_date')->get() as $sy)
+                                <option value="{{ $sy->name }}" {{ $schoolYear === $sy->name ? 'selected' : '' }}>SY {{ $sy->name }}</option>
+                                @endforeach
                             </select>
                             <iconify-icon icon="solar:alt-arrow-right-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
                         </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Grade and Section</label>
+                        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Grade Level</label>
                         <div class="relative">
-                            <select name="grade_section" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
-                                <option value="">All</option>
+                            <select name="grade_level" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
+                                <option value="">All Grades</option>
                                 <optgroup label="Elementary">
                                     @foreach(['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6'] as $g)
-                                    <option value="{{ $g }}" {{ request('grade_section')===$g?'selected':'' }}>{{ $g }}</option>
+                                    <option value="{{ $g }}" {{ ($gradeLevel ?? '') === $g ? 'selected' : '' }}>{{ $g }}</option>
                                     @endforeach
                                 </optgroup>
                                 <optgroup label="Junior High School">
                                     @foreach(['Grade 7','Grade 8','Grade 9','Grade 10'] as $g)
-                                    <option value="{{ $g }}" {{ request('grade_section')===$g?'selected':'' }}>{{ $g }}</option>
+                                    <option value="{{ $g }}" {{ ($gradeLevel ?? '') === $g ? 'selected' : '' }}>{{ $g }}</option>
                                     @endforeach
                                 </optgroup>
                                 <optgroup label="Senior High School">
-                                    <option value="Grade 11" {{ request('grade_section')==='Grade 11'?'selected':'' }}>Grade 11</option>
-                                    <option value="Grade 12" {{ request('grade_section')==='Grade 12'?'selected':'' }}>Grade 12</option>
+                                    @foreach(['Grade 11','Grade 12'] as $g)
+                                    <option value="{{ $g }}" {{ ($gradeLevel ?? '') === $g ? 'selected' : '' }}>{{ $g }}</option>
+                                    @endforeach
                                 </optgroup>
+                            </select>
+                            <iconify-icon icon="solar:alt-arrow-right-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Section
+                            @if($gradeLevel)
+                            <span class="text-[10px] text-slate-400 font-normal">({{ $gradeLevel }})</span>
+                            @endif
+                        </label>
+                        <div class="relative">
+                            <select name="section" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
+                                <option value="">All Sections</option>
+                                @forelse($sections as $sec)
+                                <option value="{{ $sec->section_name }}" {{ ($sectionFilter ?? '') === $sec->section_name ? 'selected' : '' }}>
+                                    {{ $gradeLevel ? $sec->section_name : $sec->grade_level . ' – ' . $sec->section_name }}
+                                </option>
+                                @empty
+                                <option value="" disabled>No sections found</option>
+                                @endforelse
                             </select>
                             <iconify-icon icon="solar:alt-arrow-right-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
                         </div>
@@ -280,6 +301,11 @@
                                 class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors" title="Withdraw Student">
                                 <iconify-icon icon="solar:user-minus-bold" width="14"></iconify-icon>
                             </button>
+                            <button type="button"
+                                onclick="openArchiveModal({{ $student->id }},'{{ addslashes($student->formatted_name) }}','{{ addslashes($student->student_id) }}','{{ $student->student_status }}','{{ $student->clearance_status ?? 'pending' }}')"
+                                class="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-500 transition-colors" title="Archive Student">
+                                <iconify-icon icon="solar:archive-bold" width="14"></iconify-icon>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -390,6 +416,72 @@
                     <iconify-icon icon="solar:user-minus-bold" width="14"></iconify-icon> CONFIRM WITHDRAWAL
                 </button>
                 <button type="button" onclick="srCloseModal('withdraw-modal')" class="px-6 py-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">CANCEL</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ ARCHIVE MODAL ═══ --}}
+<div id="archive-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="srCloseModal('archive-modal')"></div>
+    <div class="relative w-full max-w-md mx-4 rounded-2xl bg-white dark:bg-dark-card shadow-2xl overflow-hidden">
+
+        {{-- Header --}}
+        <div id="archive-modal-header" class="bg-purple-600 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <iconify-icon icon="solar:archive-bold" width="18" class="text-white/80"></iconify-icon>
+                <h3 id="archive-modal-title" class="text-white text-sm font-bold">ARCHIVE STUDENT</h3>
+            </div>
+            <button onclick="srCloseModal('archive-modal')" class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 text-sm">✕</button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4">
+
+            {{-- Warning banner (shown when blocked) --}}
+            <div id="archive-warning-banner" class="hidden rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 flex gap-3 items-start">
+                <iconify-icon icon="solar:danger-triangle-bold" width="18" class="text-amber-500 mt-0.5 shrink-0"></iconify-icon>
+                <div>
+                    <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-0.5">Cannot Archive This Student</p>
+                    <p class="text-xs text-amber-600 dark:text-amber-500">This student is currently <strong>Active</strong> with <strong>Pending Clearance</strong>. Resolve the clearance before archiving.</p>
+                </div>
+            </div>
+
+            {{-- Info row --}}
+            <div class="rounded-xl bg-slate-50 dark:bg-slate-800/40 px-4 py-3 space-y-1.5">
+                <div class="flex gap-2 text-xs">
+                    <span class="w-28 text-slate-400 shrink-0">Student ID</span>
+                    <span id="archive-student-id" class="font-mono font-medium text-slate-700 dark:text-slate-300">—</span>
+                </div>
+                <div class="flex gap-2 text-xs">
+                    <span class="w-28 text-slate-400 shrink-0">Name</span>
+                    <span id="archive-student-name" class="font-medium text-slate-700 dark:text-slate-300">—</span>
+                </div>
+                <div class="flex gap-2 text-xs">
+                    <span class="w-28 text-slate-400 shrink-0">Status</span>
+                    <span id="archive-student-status" class="font-medium text-slate-700 dark:text-slate-300">—</span>
+                </div>
+                <div class="flex gap-2 text-xs">
+                    <span class="w-28 text-slate-400 shrink-0">Clearance</span>
+                    <span id="archive-clearance-status" class="font-medium text-slate-700 dark:text-slate-300">—</span>
+                </div>
+            </div>
+
+            {{-- Confirmation message (shown when allowed) --}}
+            <p id="archive-confirm-text" class="text-xs text-slate-500 dark:text-slate-400">
+                This will move the student to the <strong>Archives</strong>. The record will be preserved but marked as archived.
+            </p>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-dark-border">
+                <button id="archive-confirm-btn"
+                    onclick="submitArchive()"
+                    class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    <iconify-icon icon="solar:archive-bold" width="14"></iconify-icon>
+                    CONFIRM ARCHIVE
+                </button>
+                <button type="button" onclick="srCloseModal('archive-modal')"
+                    class="px-6 py-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                    CANCEL
+                </button>
             </div>
         </div>
     </div>
@@ -569,6 +661,51 @@ function confirmWithdraw(){
     fetch('{{ route("admin.student-records.withdraw") }}',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify({student_id:withdrawStudentId,reason,other_reason:otherText,effective_date:document.getElementById('withdraw-date').value,details:document.getElementById('withdraw-details').value,notify_guardian:document.getElementById('notify-guardian').checked,process_refund:document.getElementById('process-refund').checked,clear_balance:document.getElementById('clear-balance').checked})})
     .then(r=>r.json()).then(data=>{srCloseModal('withdraw-modal');showToast(data.message,data.success?'success':'error');if(data.success)setTimeout(()=>location.reload(),1400);})
     .catch(()=>showToast('Request failed.','error'));
+}
+
+let archiveStudentId = null;
+function openArchiveModal(id, name, studentId, status, clearance) {
+    archiveStudentId = id;
+    document.getElementById('archive-modal-title').textContent = 'ARCHIVE STUDENT — ' + name;
+    document.getElementById('archive-student-id').textContent   = studentId;
+    document.getElementById('archive-student-name').textContent = name;
+    document.getElementById('archive-student-status').textContent  = status.charAt(0).toUpperCase() + status.slice(1);
+    document.getElementById('archive-clearance-status').textContent = clearance.charAt(0).toUpperCase() + clearance.slice(1);
+
+    const blocked = (status === 'active' && (clearance === 'pending' || clearance === ''));
+    document.getElementById('archive-warning-banner').classList.toggle('hidden', !blocked);
+    document.getElementById('archive-confirm-text').classList.toggle('hidden', blocked);
+    document.getElementById('archive-confirm-btn').disabled = blocked;
+
+    // Change header color to amber when blocked
+    const header = document.getElementById('archive-modal-header');
+    if (blocked) {
+        header.classList.remove('bg-purple-600');
+        header.classList.add('bg-amber-500');
+    } else {
+        header.classList.remove('bg-amber-500');
+        header.classList.add('bg-purple-600');
+    }
+
+    srOpenModal('archive-modal');
+}
+function submitArchive() {
+    const btn = document.getElementById('archive-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = 'Archiving…';
+    fetch('{{ route("admin.student-records.archive") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ student_id: archiveStudentId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        srCloseModal('archive-modal');
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 1400);
+        else { btn.disabled = false; btn.innerHTML = '<iconify-icon icon="solar:archive-bold" width="14"></iconify-icon> CONFIRM ARCHIVE'; }
+    })
+    .catch(() => { showToast('Request failed.', 'error'); btn.disabled = false; });
 }
 
 function openSendNoticeModal(){

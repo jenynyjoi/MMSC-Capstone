@@ -17,18 +17,31 @@ class StudentRecordController extends Controller
     public function index(Request $request)
     {
         $schoolYear     = $request->get('school_year', \App\Models\SchoolYear::activeName());
-        $gradeSection   = $request->get('grade_section');
+        $gradeLevel     = $request->get('grade_level');
+        $sectionFilter  = $request->get('section');
         $studentStatus  = $request->get('student_status', 'active');
         $academicStatus = $request->get('academic_status');
         $clearanceStatus= $request->get('clearance_status');
 
+        // Load sections for the dropdown, optionally narrowed to the selected grade
+        $sections = \App\Models\Section::where('school_year', $schoolYear)
+            ->where('section_status', 'active')
+            ->where('is_subject_section', false)
+            ->when($gradeLevel, fn($q) => $q->where('grade_level', $gradeLevel))
+            ->orderBy('grade_level')
+            ->orderBy('section_name')
+            ->get(['grade_level', 'section_name']);
+
         $query = Student::query()
             ->where('school_year', $schoolYear)
-            ->whereHas('enrollments', fn($q) => $q->where('school_year', $schoolYear)->whereNotNull('section_id'))
-            ->when($studentStatus,   fn($q) => $q->where('student_status',   $studentStatus))
-            ->when($academicStatus,  fn($q) => $q->where('academic_status',  $academicStatus))
-            ->when($clearanceStatus, fn($q) => $q->where('clearance_status', $clearanceStatus))
-            ->when($gradeSection,    fn($q) => $q->where('grade_level',      $gradeSection))
+            ->whereHas('enrollments', fn($q) => $q->where('school_year', $schoolYear))
+            ->when($studentStatus,    fn($q) => $q->where('student_status',   $studentStatus))
+            ->when($academicStatus,   fn($q) => $q->where('academic_status',  $academicStatus))
+            ->when($clearanceStatus,  fn($q) => $q->where('clearance_status', $clearanceStatus))
+            ->when($gradeLevel,       fn($q) => $q->where('grade_level',      $gradeLevel))
+            ->when($sectionFilter,    fn($q) => $q->whereHas('enrollments', fn($eq) =>
+                $eq->where('school_year', $schoolYear)->where('section_name', $sectionFilter)
+            ))
             ->with('latestEnrollment')
             ->orderBy('last_name')
             ->orderBy('first_name');
@@ -56,7 +69,7 @@ class StudentRecordController extends Controller
             'cleared' => Student::where(['school_year' => $schoolYear, 'clearance_status' => 'cleared'])->count(),
         ];
 
-        return view('admin.student-records.list', compact('students', 'stats', 'schoolYear'));
+        return view('admin.student-records.list', compact('students', 'stats', 'schoolYear', 'gradeLevel', 'sectionFilter', 'sections'));
     }
 
     // ══════════════════════════════════════════════════════
@@ -304,6 +317,114 @@ class StudentRecordController extends Controller
             'success' => true,
             'message' => 'Notice queued for ' . $students->count() . ' student(s). ' . $sent . ' email(s) will be sent.',
         ]);
+    }
+
+    // ══════════════════════════════════════════════════════
+    // ARCHIVES LIST
+    // ══════════════════════════════════════════════════════
+    public function archives(Request $request)
+    {
+        $activeSchoolYear = \App\Models\SchoolYear::activeName();
+        $schoolYear  = $request->get('school_year', $activeSchoolYear);
+        $gradeLevel  = $request->get('grade_level');
+        $statusFilter = $request->get('status_filter');
+
+        $query = Student::query()
+            ->where('student_status', 'archived')
+            ->when($schoolYear,    fn($q) => $q->where('school_year', $schoolYear))
+            ->when($gradeLevel,    fn($q) => $q->where('grade_level', $gradeLevel))
+            ->when($statusFilter,  fn($q) => $q->where('clearance_status', $statusFilter))
+            ->orderByDesc('updated_at');
+
+        $archived = $query->paginate(15)->withQueryString();
+
+        $archived->through(function ($student) {
+            $enrollment = StudentEnrollment::where('student_id', $student->id)
+                ->where('school_year', $student->school_year)->first();
+            $student->section_display_name = \App\Models\Section::formatName(
+                $student->grade_level ?? '—',
+                $enrollment?->section_name ?? '—',
+                $enrollment?->strand
+            );
+            $student->archived_at = $student->updated_at;
+            return $student;
+        });
+
+        $schoolYears = \App\Models\SchoolYear::orderByDesc('name')->pluck('name');
+
+        return view('admin.student-records.archives', compact('archived', 'activeSchoolYear', 'schoolYears'));
+    }
+
+    // ══════════════════════════════════════════════════════
+    // ARCHIVE STUDENT
+    // ══════════════════════════════════════════════════════
+    public function archive(Request $request)
+    {
+        $request->validate(['student_id' => 'required|exists:students,id']);
+
+        $student = Student::findOrFail($request->student_id);
+
+        // Block: active status with pending clearance
+        if ($student->student_status === 'active' && ($student->clearance_status === null || $student->clearance_status === 'pending')) {
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'message' => 'Cannot archive ' . $student->full_name . ': student is currently active with pending clearance. Resolve clearance first.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($student) {
+            $student->update(['student_status' => 'archived']);
+
+            StudentEnrollment::where('student_id', $student->id)
+                ->where('school_year', $student->school_year)
+                ->update(['enrollment_status' => 'archived']);
+
+            DB::table('audit_log')->insert([
+                'student_id'      => $student->id,
+                'action'          => 'student_archived',
+                'action_type'     => 'archive',
+                'action_category' => 'student_management',
+                'new_value'       => json_encode(['archived_by' => auth()->id(), 'archived_at' => now()]),
+                'performed_by'    => auth()->id(),
+                'performed_at'    => now(),
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => $student->full_name . ' has been archived successfully.',
+        ]);
+    }
+
+    // ══════════════════════════════════════════════════════
+    // RESTORE ARCHIVED STUDENT
+    // ══════════════════════════════════════════════════════
+    public function restoreArchive(Request $request)
+    {
+        $request->validate(['student_id' => 'required|exists:students,id']);
+        $student = Student::findOrFail($request->student_id);
+
+        DB::transaction(function () use ($student) {
+            $student->update(['student_status' => 'inactive']);
+
+            StudentEnrollment::where('student_id', $student->id)
+                ->where('school_year', $student->school_year)
+                ->where('enrollment_status', 'archived')
+                ->update(['enrollment_status' => 'enrolled']);
+
+            DB::table('audit_log')->insert([
+                'student_id'      => $student->id,
+                'action'          => 'student_restored',
+                'action_type'     => 'restore',
+                'action_category' => 'student_management',
+                'new_value'       => json_encode(['restored_by' => auth()->id(), 'restored_at' => now()]),
+                'performed_by'    => auth()->id(),
+                'performed_at'    => now(),
+            ]);
+        });
+
+        return response()->json(['success' => true, 'message' => $student->full_name . ' has been restored to inactive status.']);
     }
 
     // ══════════════════════════════════════════════════════

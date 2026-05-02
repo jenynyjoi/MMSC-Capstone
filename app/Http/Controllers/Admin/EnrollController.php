@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Application;
+use App\Models\SchoolYear;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\StudentEnrollment;
+use App\Models\StudentFinance;
+use App\Models\StudentLibraryRecord;
+use App\Models\StudentPropertyRecord;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -218,6 +223,9 @@ class EnrollController extends Controller
             $this->queueAssignmentEmail($enrollment, $section, 'section_assigned');
         });
 
+        // Create student + parent portal accounts now that the student is officially enrolled
+        $this->createPortalAccountsIfNeeded(Student::find($enrollment->student_id));
+
         return response()->json([
             'success' => true,
             'message' => $enrollment->student->full_name . ' has been assigned to ' . $section->section_name . '.',
@@ -425,6 +433,8 @@ class EnrollController extends Controller
                 $this->queueAssignmentEmail($enrollment, $section, 'section_assigned');
                 $assigned++;
             });
+
+            $this->createPortalAccountsIfNeeded(Student::find($enrollment->student_id));
         }
 
         return [$assigned, $failed];
@@ -481,6 +491,7 @@ class EnrollController extends Controller
                 $assigned++;
             });
 
+            $this->createPortalAccountsIfNeeded(Student::find($enrollment->student_id));
             $sIdx = ($sIdx + 1) % max(1, $sections->count());
         }
 
@@ -531,6 +542,8 @@ class EnrollController extends Controller
                     $this->queueAssignmentEmail($enrollment, $section, 'section_assigned');
                     $assigned++;
                 });
+
+                $this->createPortalAccountsIfNeeded(Student::find($enrollment->student_id));
             }
         }
 
@@ -877,15 +890,242 @@ class EnrollController extends Controller
             $this->sendDirectEnrollCredentialsEmail($studentOut, $schoolEmailOut, $tempPasswordOut, $validated['personal_email']);
         }
 
+        // Create parent portal account alongside student account
+        if ($studentOut) {
+            $this->createParentPortalAccount($studentOut);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $validated['first_name'] . ' ' . $validated['last_name'] . ' enrolled and assigned to ' . $section->section_name . '.',
         ]);
     }
 
-    public function promote()
+    public function promote(Request $request)
     {
-        return view('admin.enrollment.promote');
+        $schoolYear     = $request->get('school_year', SchoolYear::activeName());
+        $allSchoolYears = SchoolYear::orderByDesc('start_date')->get();
+
+        // Next SYs available for promotion target
+        $nextSchoolYears = $allSchoolYears->filter(fn($sy) => $sy->name > $schoolYear)->sortBy('name')->values();
+        if ($nextSchoolYears->isEmpty()) {
+            [$y] = explode('-', $schoolYear);
+            $nextSchoolYears = collect([(object)['name' => ($y + 1) . '-' . ($y + 2)]]);
+        }
+
+        // ── Load all enrolled students for stat counting ──────────────────
+        $allEnrolled = Student::where('school_year', $schoolYear)
+            ->where('enrollment_status', 'enrolled')
+            ->select(['id', 'reference_number', 'behavioral_clearance', 'property_clearance',
+                      'first_name', 'last_name', 'grade_level', 'student_id', 'academic_status'])
+            ->get();
+
+        $allIds  = $allEnrolled->pluck('id');
+        $allRefs = $allEnrolled->pluck('reference_number')->filter()->unique();
+
+        $libAll  = StudentLibraryRecord::where('school_year', $schoolYear)->whereIn('student_id', $allIds)->select(['student_id','status'])->get()->keyBy('student_id');
+        $finAll  = StudentFinance::where('school_year', $schoolYear)->whereIn('student_id', $allIds)->select(['student_id','finance_clearance'])->get()->keyBy('student_id');
+        $propAll = StudentPropertyRecord::where('school_year', $schoolYear)->whereIn('student_id', $allIds)->select(['student_id','status'])->get()->keyBy('student_id');
+        $appAll  = Application::whereIn('reference_number', $allRefs)
+            ->select(['id','reference_number','psa_status','report_card_status','good_moral_status'])
+            ->get()->keyBy('reference_number');
+
+        $recordsStatus = function ($refNum) use ($appAll) {
+            $app = $refNum ? $appAll->get($refNum) : null;
+            if (!$app) return 'missing';
+            $allApproved = $app->psa_status === 'approved' && $app->report_card_status === 'approved' && $app->good_moral_status === 'approved';
+            $anyMissing  = in_array('not_uploaded', [$app->psa_status, $app->report_card_status, $app->good_moral_status]);
+            return $allApproved ? 'cleared' : ($anyMissing ? 'missing' : 'pending');
+        };
+
+        $overallStatus = function ($fin, $lib, $prop, $beh, $rec) {
+            if ($fin === 'cleared' && $lib === 'cleared' && $prop === 'cleared' && $beh === 'cleared' && $rec === 'cleared') return 'cleared';
+            if ($fin === 'overdue') return 'overdue';
+            return 'pending';
+        };
+
+        // Students already promoted to a future SY
+        $promotedIds = StudentEnrollment::whereIn('student_id', $allIds)
+            ->where('school_year', '>', $schoolYear)
+            ->pluck('student_id')->unique()->flip()->all();
+
+        $clearedIds = []; $clearedCount = 0; $overdueCount = 0; $promotedCount = count($promotedIds);
+
+        foreach ($allEnrolled as $s) {
+            if (isset($promotedIds[$s->id])) continue;
+            $fin  = $finAll->get($s->id)?->finance_clearance ?? 'pending';
+            $lib  = $libAll->get($s->id)?->status            ?? 'pending';
+            $prop = $propAll->get($s->id)?->status           ?? 'pending';
+            $beh  = $s->behavioral_clearance                 ?? 'pending';
+            $rec  = $recordsStatus($s->reference_number);
+            $ov   = $overallStatus($fin, $lib, $prop, $beh, $rec);
+            if ($ov === 'cleared') { $clearedIds[] = $s->id; $clearedCount++; }
+            elseif ($ov === 'overdue') $overdueCount++;
+        }
+
+        $stats = [
+            'total'    => $allEnrolled->count(),
+            'cleared'  => $clearedCount,
+            'pending'  => $allEnrolled->count() - $clearedCount - $overdueCount - $promotedCount,
+            'promoted' => $promotedCount,
+        ];
+
+        // ── Paginated query — ONLY fully cleared students ─────────────────
+        $query = Student::where('school_year', $schoolYear)
+            ->where('enrollment_status', 'enrolled')
+            ->whereIn('id', $clearedIds ?: [0]);
+
+        if ($request->filled('grade_section')) {
+            $query->where('grade_level', $request->grade_section);
+        }
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn($q) => $q->where('first_name', 'like', "%$s%")
+                ->orWhere('last_name', 'like', "%$s%")
+                ->orWhere('student_id', 'like', "%$s%"));
+        }
+
+        $students = $query->orderBy('last_name')->orderBy('first_name')
+            ->paginate($request->get('per_page', 20))
+            ->withQueryString();
+
+        $students->each(function ($student) {
+            $student->formatted_name  = trim($student->first_name . ' ' . $student->last_name);
+            $student->clearance_status = 'cleared';
+            $status = strtolower($student->academic_status ?? '');
+            $student->final_results = in_array($status, ['passed','failed','retained'])
+                ? ucfirst($status) : 'Passed';
+        });
+
+        $activeSchoolYear = $schoolYear;
+
+        return view('admin.enrollment.promote', compact(
+            'students', 'stats', 'activeSchoolYear', 'allSchoolYears', 'nextSchoolYears', 'schoolYear'
+        ));
+    }
+
+    public function promoteSingle(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'next_grade' => 'required|string',
+            'school_year'=> 'required|string',
+        ]);
+
+        $student   = Student::findOrFail($validated['student_id']);
+        $nextGrade = $validated['next_grade'];
+        $nextSy    = $validated['school_year'];
+        $graduating = $nextGrade === 'Graduated';
+
+        $student->update([
+            'grade_level'       => $graduating ? $student->grade_level : $nextGrade,
+            'school_year'       => $nextSy,
+            'enrollment_status' => $graduating ? 'graduated' : 'pending',
+            'section_id'        => null,
+            'section_name'      => null,
+        ]);
+
+        if (!$graduating) {
+            StudentEnrollment::firstOrCreate(
+                ['student_id' => $student->id, 'school_year' => $nextSy],
+                [
+                    'grade_level'         => $nextGrade,
+                    'grade_level_applied' => $nextGrade,
+                    'program_level'       => $this->getProgramLevel($nextGrade),
+                    'student_type'        => 'regular',
+                    'enrollment_type'     => 'return',
+                    'gender'              => $student->gender,
+                    'enrollment_date'     => now()->toDateString(),
+                    'enrollment_status'   => 'pending',
+                    'assignment_status'   => 'pending',
+                ]
+            );
+        }
+
+        $name = trim($student->first_name . ' ' . $student->last_name);
+        return response()->json([
+            'success' => true,
+            'message' => "$name has been promoted to $nextGrade for SY $nextSy.",
+        ]);
+    }
+
+    public function promoteBulk(Request $request)
+    {
+        $validated = $request->validate([
+            'student_ids'   => 'required|array|min:1',
+            'student_ids.*' => 'exists:students,id',
+            'school_year'   => 'required|string',
+        ]);
+
+        $nextSy    = $validated['school_year'];
+        $promoted  = 0;
+        $skipped   = 0;
+
+        $nextGradeMap = [
+            'Kinder'   => 'Grade 1',
+            'Grade 1'  => 'Grade 2',
+            'Grade 2'  => 'Grade 3',
+            'Grade 3'  => 'Grade 4',
+            'Grade 4'  => 'Grade 5',
+            'Grade 5'  => 'Grade 6',
+            'Grade 6'  => 'Grade 7',
+            'Grade 7'  => 'Grade 8',
+            'Grade 8'  => 'Grade 9',
+            'Grade 9'  => 'Grade 10',
+            'Grade 10' => 'Grade 11',
+            'Grade 11' => 'Grade 12',
+            'Grade 12' => 'Graduated',
+        ];
+
+        foreach ($validated['student_ids'] as $id) {
+            $student = Student::find($id);
+            if (!$student) { $skipped++; continue; }
+
+            $nextGrade  = $nextGradeMap[$student->grade_level] ?? null;
+            if (!$nextGrade) { $skipped++; continue; }
+
+            $graduating = $nextGrade === 'Graduated';
+
+            $student->update([
+                'grade_level'       => $graduating ? $student->grade_level : $nextGrade,
+                'school_year'       => $nextSy,
+                'enrollment_status' => $graduating ? 'graduated' : 'pending',
+                'section_id'        => null,
+                'section_name'      => null,
+            ]);
+
+            if (!$graduating) {
+                StudentEnrollment::firstOrCreate(
+                    ['student_id' => $student->id, 'school_year' => $nextSy],
+                    [
+                        'grade_level'         => $nextGrade,
+                        'grade_level_applied' => $nextGrade,
+                        'program_level'       => $this->getProgramLevel($nextGrade),
+                        'student_type'        => 'regular',
+                        'enrollment_type'     => 'return',
+                        'gender'              => $student->gender,
+                        'enrollment_date'     => now()->toDateString(),
+                        'enrollment_status'   => 'pending',
+                        'assignment_status'   => 'pending',
+                    ]
+                );
+            }
+            $promoted++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "$promoted student(s) promoted successfully." . ($skipped ? " $skipped skipped." : ''),
+        ]);
+    }
+
+    private function getProgramLevel(string $grade): string
+    {
+        return match(true) {
+            in_array($grade, ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6']) => 'Elementary',
+            in_array($grade, ['Grade 7','Grade 8','Grade 9','Grade 10']) => 'Junior High School',
+            default => 'Senior High School',
+        };
     }
 
     private function sendDirectEnrollCredentialsEmail(Student $student, string $schoolEmail, string $tempPassword, string $personalEmail): void
@@ -1006,5 +1246,146 @@ Please log in to the student portal to view your complete class schedule.
 
 Registrar's Office — My Messiah School of Cavite
 TEXT;
+    }
+
+    // ══════════════════════════════════════════════════════
+    // PORTAL ACCOUNT CREATION (student + parent)
+    // Triggered at section assignment — official enrollment.
+    // ══════════════════════════════════════════════════════
+
+    private function createPortalAccountsIfNeeded(?Student $student): void
+    {
+        if (!$student || $student->portal_account_created) return;
+        $this->createStudentPortalAccount($student);
+        $this->createParentPortalAccount($student);
+    }
+
+    private function createStudentPortalAccount(Student $student): void
+    {
+        $schoolEmail  = $student->school_email;
+        $tempPassword = $student->reference_number ?? Str::random(10);
+
+        if (!$schoolEmail || User::where('email', $schoolEmail)->exists()) return;
+
+        $user = User::create([
+            'name'     => $student->full_name,
+            'email'    => $schoolEmail,
+            'password' => Hash::make($tempPassword),
+        ]);
+        $user->assignRole('student');
+
+        $student->update([
+            'user_id'                => $user->id,
+            'portal_account_created' => true,
+            'account_created_at'     => now(),
+            'password_changed'       => false,
+        ]);
+
+        try {
+            $this->sendStudentEnrollmentEmail($student, $schoolEmail, $tempPassword);
+        } catch (\Exception $e) {
+            Log::warning("Student credentials email failed [{$student->id}]: " . $e->getMessage());
+        }
+    }
+
+    private function createParentPortalAccount(Student $student): void
+    {
+        $guardianEmail = $student->guardian_email;
+        if (!$guardianEmail) return;
+
+        $tempPassword = $student->reference_number ?? Str::random(10);
+
+        if (User::where('email', $guardianEmail)->exists()) return;
+
+        $parent = User::create([
+            'name'     => $student->guardian_name ?? 'Parent/Guardian',
+            'email'    => $guardianEmail,
+            'password' => Hash::make($tempPassword),
+        ]);
+        $parent->assignRole('parent');
+
+        try {
+            $this->sendParentEnrollmentEmail($student, $guardianEmail, $tempPassword);
+        } catch (\Exception $e) {
+            Log::warning("Parent credentials email failed [{$student->id}]: " . $e->getMessage());
+        }
+    }
+
+    private function sendStudentEnrollmentEmail(Student $student, string $email, string $pass): void
+    {
+        $name = $student->full_name;
+        $sid  = $student->student_id;
+        $body = <<<TEXT
+Dear {$name},
+
+Congratulations! You are now officially enrolled at My Messiah School of Cavite (MMSC).
+
+STUDENT ACCOUNT DETAILS
+==================================================
+Student ID:           {$sid}
+School Email:         {$email}
+Temporary Password:   {$pass}
+
+LOGIN INSTRUCTIONS
+==================================================
+Portal URL: https://portal.mmsc.edu.ph
+Username:   {$email}
+Password:   {$pass}
+
+Please change your password after your first login.
+For support: it@mmsc.edu.ph
+
+Registrar's Office — My Messiah School of Cavite
+TEXT;
+
+        Mail::raw($body, function ($mail) use ($student, $name) {
+            $mail->from('registrar@mmsc.edu.ph', 'MMSC Registrar')
+                 ->to($student->personal_email, $name)
+                 ->subject("Welcome to MMSC — Your Student Portal Account");
+            if ($student->guardian_email) {
+                $mail->cc($student->guardian_email, $student->guardian_name ?? 'Guardian');
+            }
+        });
+    }
+
+    private function sendParentEnrollmentEmail(Student $student, string $guardianEmail, string $pass): void
+    {
+        $parentName  = $student->guardian_name ?? 'Parent/Guardian';
+        $studentName = $student->full_name;
+        $grade       = $student->grade_level ?? $student->incoming_grade_level ?? '—';
+        $body        = <<<TEXT
+Dear {$parentName},
+
+Your child {$studentName} is now officially enrolled at My Messiah School of Cavite (MMSC).
+A parent portal account has been created for you to monitor their academic progress.
+
+PARENT ACCOUNT DETAILS
+==================================================
+Email:              {$guardianEmail}
+Temporary Password: {$pass}
+
+LINKED STUDENT
+==================================================
+Student:     {$studentName}
+Student ID:  {$student->student_id}
+Grade Level: {$grade}
+
+LOGIN
+==================================================
+Parent Portal: https://portal.mmsc.edu.ph/parent
+Username:      {$guardianEmail}
+Password:      {$pass}
+
+Please change your password after your first login.
+For support: it@mmsc.edu.ph
+
+Registrar's Office — My Messiah School of Cavite
+TEXT;
+
+        Mail::raw($body, function ($mail) use ($guardianEmail, $parentName, $studentName) {
+            $mail->from('registrar@mmsc.edu.ph', 'MMSC Registrar')
+                 ->to($guardianEmail, $parentName)
+                 ->subject("Your MMSC Parent Portal Account — {$studentName}");
+        });
     }
 }

@@ -77,7 +77,7 @@
                             <div class="relative">
                                 <select name="specialization" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
                                     <option value="">All</option>
-                                    @foreach(['Science','English','Mathematics','Filipino','MAPEH','Statistics','Social Studies','TLE'] as $s)
+                                    @foreach($subjectSpecializations as $s)
                                     <option value="{{ $s }}" {{ request('specialization')===$s?'selected':'' }}>{{ $s }}</option>
                                     @endforeach
                                 </select>
@@ -168,9 +168,9 @@
                         $statusBadge = ['active'=>'bg-green-100 text-green-700','resigned'=>'bg-red-100 text-red-600','on_leave'=>'bg-yellow-100 text-yellow-700','inactive'=>'bg-slate-100 text-slate-500'];
                     @endphp
                     @forelse($teachers as $tp)
-                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors teacher-row" data-name="{{ strtolower($tp->user?->name ?? '') }}">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors teacher-row" data-name="{{ strtolower($tp->formatted_name) }}">
                         <td class="px-4 py-3 text-xs font-mono text-slate-400 whitespace-nowrap">{{ $tp->teacher_id_code ?? '—' }}</td>
-                        <td class="px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $tp->user?->name }}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $tp->formatted_name }}</td>
                         <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{{ $tp->academic_rank ?? '—' }}</td>
                         <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{{ $tp->employment_status ?? '—' }}</td>
                         <td class="px-4 py-3 text-xs text-slate-500">{{ implode(', ', $tp->specializations ?? []) ?: '—' }}</td>
@@ -336,13 +336,35 @@
                 </div>
             </div>
 
+            {{-- Stats Cards --}}
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-6 py-5 border-b border-slate-100 dark:border-dark-border">
+                @foreach([
+                    ['blue',  'solar:layers-bold',          'text-blue-500',  $assignStats['total_sections'], 'Total Sections'],
+                    ['indigo','solar:book-bold',             'text-indigo-500',$assignStats['total_subjects'], 'Total Subjects'],
+                    ['green', 'solar:user-check-bold',       'text-green-600', $assignStats['assigned'],       'Assigned'],
+                    ['amber', 'solar:user-block-bold',       'text-amber-500', $assignStats['unassigned'],     'Unassigned'],
+                ] as [$color, $icon, $clr, $count, $label])
+                <div class="flex items-center gap-4 rounded-xl border border-{{ $color }}-200 bg-{{ $color }}-50 dark:bg-{{ $color }}-900/10 px-5 py-4">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-{{ $color }}-100 dark:bg-{{ $color }}-900/30">
+                        <iconify-icon icon="{{ $icon }}" width="20" class="{{ $clr }}"></iconify-icon>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-slate-800 dark:text-white">{{ $count }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $label }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
             {{-- Filters --}}
             <div class="px-6 py-4 border-b border-slate-100 dark:border-dark-border">
                 <form method="GET" action="{{ route('admin.teachers') }}#assign-teacher-section">
                     <input type="hidden" name="tab" value="assign-teacher">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+
+                        {{-- Grade Level --}}
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-medium text-slate-500">Grade Level</label>
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Grade Level</label>
                             <div class="relative">
                                 <select name="alloc_grade" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
                                     <option value="">All Grades</option>
@@ -353,23 +375,57 @@
                                 <iconify-icon icon="solar:alt-arrow-down-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
                             </div>
                         </div>
+
+                        {{-- Section --}}
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-medium text-slate-500">Search</label>
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Section</label>
+                            <div class="relative">
+                                <select name="alloc_section" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
+                                    <option value="">All Sections</option>
+                                    @foreach($allocSectionNames as $sn)
+                                    <option value="{{ $sn }}" {{ request('alloc_section')===$sn?'selected':'' }}>{{ $sn }}</option>
+                                    @endforeach
+                                </select>
+                                <iconify-icon icon="solar:alt-arrow-down-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
+                            </div>
+                        </div>
+
+                        {{-- Status --}}
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Status</label>
+                            <div class="relative">
+                                <select name="alloc_status" class="w-full appearance-none rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8">
+                                    <option value="">All Status</option>
+                                    <option value="fully_assigned" {{ request('alloc_status')==='fully_assigned'?'selected':'' }}>Fully Assigned</option>
+                                    <option value="partial"        {{ request('alloc_status')==='partial'?'selected':'' }}>Partially Assigned</option>
+                                    <option value="unassigned"     {{ request('alloc_status')==='unassigned'?'selected':'' }}>Unassigned</option>
+                                    <option value="no_subjects"    {{ request('alloc_status')==='no_subjects'?'selected':'' }}>No Subjects</option>
+                                </select>
+                                <iconify-icon icon="solar:alt-arrow-down-linear" width="13" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
+                            </div>
+                        </div>
+
+                        {{-- Search --}}
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-medium text-slate-500 dark:text-slate-400">Search</label>
                             <div class="relative">
                                 <input type="text" name="alloc_search" value="{{ request('alloc_search') }}"
-                                    placeholder="Section name or grade…"
+                                    placeholder="Section or grade…"
                                     class="w-full rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/40 dark:text-slate-300 pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400">
                                 <iconify-icon icon="solar:magnifer-linear" width="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></iconify-icon>
                             </div>
                         </div>
+
+                        {{-- Buttons --}}
                         <div class="flex items-end">
                             <div class="flex items-center gap-2 w-full">
-                                <button type="submit" class="flex items-center gap-1.5 rounded-lg bg-[#0d4c8f] hover:bg-blue-700 px-5 py-2 text-xs font-semibold text-white transition-colors">
+                                <button type="submit" class="flex items-center gap-1.5 rounded-lg bg-[#0d4c8f] hover:bg-blue-700 px-4 py-2 text-xs font-semibold text-white transition-colors">
                                     <iconify-icon icon="solar:filter-bold" width="13"></iconify-icon> Apply
                                 </button>
-                                <a href="{{ route('admin.teachers') }}" class="rounded-lg border border-slate-200 dark:border-dark-border px-5 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">Clear</a>
+                                <a href="{{ route('admin.teachers') }}?tab=assign-teacher" class="rounded-lg border border-slate-200 dark:border-dark-border px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">Clear</a>
                             </div>
                         </div>
+
                     </div>
                 </form>
             </div>
@@ -705,12 +761,14 @@
             <div>
                 <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Subject Specializations</label>
                 <div class="grid grid-cols-3 gap-2 rounded-xl border border-slate-200 dark:border-dark-border px-4 py-3">
-                    @foreach(['Science','English','Mathematics','Filipino','MAPEH','Social Studies','TLE','Values Education','Statistics','Physics','Chemistry','Biology','History'] as $subj)
+                    @forelse($subjectSpecializations as $subj)
                     <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
                         <input type="checkbox" value="{{ $subj }}" class="t-spec rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         {{ $subj }}
                     </label>
-                    @endforeach
+                    @empty
+                    <p class="col-span-3 text-xs text-slate-400 italic">No subjects found. Add subjects in Subject Management first.</p>
+                    @endforelse
                 </div>
             </div>
 

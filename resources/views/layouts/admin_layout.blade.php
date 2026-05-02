@@ -252,8 +252,13 @@
                     <div id="profile-dropdown" class="relative">
                      <button onclick="toggleProfileMenu(event)"
                             class="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-white/10 transition">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=010694&color=fff"
-                                alt="User" class="h-8 w-8 rounded-full">
+                            @if(auth()->user()->profile_photo)
+                                <img src="{{ asset('storage/' . auth()->user()->profile_photo) }}"
+                                    alt="User" class="h-8 w-8 rounded-full object-cover">
+                            @else
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=010694&color=fff"
+                                    alt="User" class="h-8 w-8 rounded-full">
+                            @endif
                             <span class="hidden sm:flex items-center text-sm font-medium text-white gap-1">
                                 Hello, {{ explode(' ', auth()->user()->name ?? 'Admin')[0] }}
                                 <iconify-icon 
@@ -263,9 +268,6 @@
                                     class="text-white">
                                 </iconify-icon>     
                             </span>
-                        </button>
-
-
                         </button>
 
                         {{-- Dropdown Menu --}}
@@ -283,13 +285,13 @@
                                 </p>
                             </div>
 
-                            <a href="#"
+                            <a href="{{ route('admin.settings.account') }}"
                                class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700
                                       dark:text-white hover:bg-slate-100 dark:hover:bg-white/10">
                                 <iconify-icon icon="solar:user-linear" width="16"></iconify-icon>
                                 Profile
                             </a>
-                            <a href="{{ route('admin.settings.general') }}"
+                            <a href="{{ route('admin.settings.account') }}"
                                class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700
                                       dark:text-white hover:bg-slate-100 dark:hover:bg-white/10">
                                 <iconify-icon icon="solar:settings-linear" width="16"></iconify-icon>
@@ -298,7 +300,7 @@
 
                             <div class="border-t border-slate-200 dark:border-white/20 my-1"></div>
 
-                            {{-- ✅ Logout — POST form (required by Laravel) --}}
+                            {{--  Logout — POST form (required by Laravel) --}}
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit"

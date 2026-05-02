@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\GradeCurriculumConfig;
 use App\Models\Section;
+use App\Models\SubjectAllocation;
 use App\Models\User;
 use App\Models\StudentEnrollment;
 use App\Models\Classroom;
@@ -105,10 +107,14 @@ class SectionController extends Controller
             'strand'               => 'nullable|string|max:100',
         ]);
 
-        // Auto-generate section_id
-        $year  = date('Y');
-        $count = Section::whereYear('created_at', $year)->count() + 1;
-        $sectionId = 'SEC-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        // Auto-generate section_id — use max existing ID to avoid gaps from deletions
+        $year   = date('Y');
+        $prefix = 'SEC-' . $year . '-';
+        $last   = Section::where('section_id', 'like', $prefix . '%')
+            ->orderByDesc('section_id')
+            ->value('section_id');
+        $next      = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
+        $sectionId = $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
 
         $fullName = Section::formatName($validated['grade_level'], $validated['section_name'], $validated['strand'] ?? null);
 
@@ -145,6 +151,9 @@ class SectionController extends Controller
             'section_type'          => 'regular',
             'is_subject_section'    => false,
         ]);
+
+        // Auto-allocate curriculum subjects to the new section
+        $this->syncCurriculumToSection($section);
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'section' => $section]);
@@ -206,5 +215,45 @@ class SectionController extends Controller
     {
         $section = Section::findOrFail($id);
         return response()->json($section);
+    }
+
+    /**
+     * Find the curriculum for this section's grade/strand and create
+     * SubjectAllocation rows for any curriculum subjects not yet allocated.
+     */
+    private function syncCurriculumToSection(Section $section): void
+    {
+        // Build curriculum key: 'Grade 12 - STEM' for SHS, plain grade otherwise
+        $isShs = in_array($section->grade_level, ['Grade 11', 'Grade 12']);
+        $curriculumKey = ($isShs && $section->strand)
+            ? $section->grade_level . ' - ' . $section->strand
+            : $section->grade_level;
+
+        $config = GradeCurriculumConfig::with('subjects.subject')
+            ->where('grade_level', $curriculumKey)
+            ->where('school_year', $section->school_year)
+            ->first();
+
+        if (! $config) return;
+
+        foreach ($config->subjects as $cs) {
+            $subject = $cs->subject;
+            if (! $subject) continue;
+
+            SubjectAllocation::firstOrCreate(
+                [
+                    'section_id'  => $section->id,
+                    'subject_id'  => $subject->id,
+                    'school_year' => $section->school_year,
+                ],
+                [
+                    'subject_code'   => $subject->subject_code,
+                    'subject_name'   => $subject->subject_name,
+                    'hours_per_week' => $cs->hours_per_week ?? $subject->hours_per_week,
+                    'teacher_id'     => null,
+                    'created_by'     => auth()->id(),
+                ]
+            );
+        }
     }
 }

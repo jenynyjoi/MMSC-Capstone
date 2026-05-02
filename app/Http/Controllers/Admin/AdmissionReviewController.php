@@ -153,6 +153,67 @@ class AdmissionReviewController extends Controller
     }
 
     // ══════════════════════════════════════════════════════
+    // GET DOCUMENT DATA (JSON — for dynamic records modal in table view)
+    // ══════════════════════════════════════════════════════
+    public function getDocumentsData(int $id)
+    {
+        $application  = Application::findOrFail($id);
+        $isEsc        = $application->student_category === 'ESC Grantee';
+        $appApproved  = $application->application_status === 'approved';
+
+        $autoStatus = fn($uploaded, $status, $approved) =>
+            ($uploaded && ($status ?? 'not_uploaded') === 'not_uploaded')
+                ? ($approved ? 'approved' : 'pending')
+                : ($status ?? 'not_uploaded');
+
+        $autoSubmitted = fn($uploaded, $submitted, $approved) =>
+            ($approved && !$uploaded && !((bool)$submitted)) ? true : (bool)$submitted;
+
+        $docs = [
+            'psa' => [
+                'label'     => 'PSA / Birth Certificate',
+                'required'  => true,
+                'uploaded'  => (bool) $application->psa_uploaded,
+                'filename'  => $application->psa_filename,
+                'status'    => $autoStatus($application->psa_uploaded, $application->psa_status, $appApproved),
+                'submitted' => $autoSubmitted($application->psa_uploaded, $application->psa_submitted ?? false, $appApproved),
+            ],
+            'report_card' => [
+                'label'     => 'Original Report Card / Form 137',
+                'required'  => true,
+                'uploaded'  => (bool) $application->report_card_uploaded,
+                'filename'  => $application->report_card_filename,
+                'status'    => $autoStatus($application->report_card_uploaded, $application->report_card_status, $appApproved),
+                'submitted' => $autoSubmitted($application->report_card_uploaded, $application->report_card_submitted ?? false, $appApproved),
+            ],
+            'good_moral' => [
+                'label'     => 'Good Moral Character',
+                'required'  => true,
+                'uploaded'  => (bool) $application->good_moral_uploaded,
+                'filename'  => $application->good_moral_filename,
+                'status'    => $autoStatus($application->good_moral_uploaded, $application->good_moral_status, $appApproved),
+                'submitted' => $autoSubmitted($application->good_moral_uploaded, $application->good_moral_submitted ?? false, $appApproved),
+            ],
+            'medical' => [
+                'label'     => 'Medical Clearance',
+                'required'  => $isEsc,
+                'uploaded'  => (bool) ($application->medical_uploaded ?? false),
+                'filename'  => $application->medical_filename ?? null,
+                'status'    => $autoStatus($application->medical_uploaded ?? false, $application->medical_status, $appApproved),
+                'submitted' => $autoSubmitted($application->medical_uploaded ?? false, $application->medical_submitted ?? false, $appApproved),
+            ],
+        ];
+
+        $requiredKeys = collect($docs)->filter(fn($d) => $d['required'])->keys()->values();
+
+        return response()->json([
+            'docs'          => $docs,
+            'required_keys' => $requiredKeys,
+            'save_url'      => route('admin.admission.documents', $id),
+            'approve_url'   => route('admin.admission.status', $id),
+        ]);
+    }
+
     // DOWNLOAD uploaded document
     // ══════════════════════════════════════════════════════
     public function downloadDocument(int $id, string $type)
@@ -455,22 +516,22 @@ class AdmissionReviewController extends Controller
         //           → student appears in Enrollment > Pending Section Assignment
         StudentEnrollment::createFromApplication($application, $student);
 
-        // Step 4 — Create student portal account (idempotent: skips if user exists)
-        $this->createStudentAccount($student, $application);
+        // Step 4 — Create student portal account (idempotent: skipped if already exists)
+        $this->createStudentPortalAccount($student);
 
-        // Step 5 — Create or link parent portal account
-        $this->createOrLinkParentAccount($student, $application);
+        // Step 5 — Create parent/guardian portal account
+        $this->createParentPortalAccount($student);
     }
 
-    // ── Create student portal account ─────────────────────
-    private function createStudentAccount(Student $student, Application $application): void
+    // ── Portal: student account ────────────────────────────
+    private function createStudentPortalAccount(Student $student): void
     {
-        // Use the school_email already generated in Student::createFromApplication
-        $schoolEmail  = $student->school_email;
-        $tempPassword = $application->reference_number;
+        if ($student->portal_account_created) return;
 
-        // Avoid duplicate (idempotent)
-        if (User::where('email', $schoolEmail)->exists()) return;
+        $schoolEmail  = $student->school_email;
+        $tempPassword = $student->reference_number ?? Str::random(10);
+
+        if (!$schoolEmail || User::where('email', $schoolEmail)->exists()) return;
 
         $user = User::create([
             'name'     => $student->full_name,
@@ -486,117 +547,99 @@ class AdmissionReviewController extends Controller
             'password_changed'       => false,
         ]);
 
-        $this->sendStudentCredentialsEmail($application, $student, $schoolEmail, $tempPassword);
-    }
-
-    // ── Generate school email ──────────────────────────────
-    private function generateSchoolEmail(string $lastName, string $firstName, ?string $middleName): string
-    {
-        $last    = $this->cleanEmailPart($lastName);
-        $first   = $this->cleanEmailPart($firstName);
-        $mid     = $middleName ? $this->cleanEmailPart(substr(trim($middleName), 0, 1)) : '';
-        $base    = $mid ? "{$last}.{$first}.{$mid}" : "{$last}.{$first}";
-        $email   = $base . '@mmsc.edu.ph';
-
-        if (User::where('email', $email)->exists()) {
-            $c = 1;
-            while (User::where('email', $base . $c . '@mmsc.edu.ph')->exists()) $c++;
-            $email = $base . $c . '@mmsc.edu.ph';
+        try {
+            $this->sendStudentApprovalEmail($student, $schoolEmail, $tempPassword);
+        } catch (\Exception $e) {
+            Log::warning("Student credentials email failed [{$student->id}]: " . $e->getMessage());
         }
-        return $email;
     }
 
-    private function cleanEmailPart(string $value): string
+    // ── Portal: parent account ─────────────────────────────
+    private function createParentPortalAccount(Student $student): void
     {
-        $map = ['ñ'=>'n','Ñ'=>'n','á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u','ç'=>'c'];
-        return preg_replace('/[^a-z0-9]/', '', strtolower(str_replace(array_keys($map), array_values($map), $value)));
-    }
-
-    // ── Create or link parent account ─────────────────────
-    private function createOrLinkParentAccount(Student $student, Application $application): void
-    {
-        $guardianEmail = $application->guardian_email ?? null;
+        $guardianEmail = $student->guardian_email;
         if (!$guardianEmail) return;
 
-        $tempPassword = $application->reference_number;
+        $tempPassword = $student->reference_number ?? Str::random(10);
 
-        if (!User::where('email', $guardianEmail)->exists()) {
-            $parent = User::create([
-                'name'     => $application->guardian_name ?? 'Parent/Guardian',
-                'email'    => $guardianEmail,
-                'password' => Hash::make($tempPassword),
-            ]);
-            $parent->assignRole('parent');
-            $this->sendParentCredentialsEmail($application, $student, $guardianEmail, $tempPassword);
+        if (User::where('email', $guardianEmail)->exists()) return;
+
+        $parent = User::create([
+            'name'     => $student->guardian_name ?? 'Parent/Guardian',
+            'email'    => $guardianEmail,
+            'password' => Hash::make($tempPassword),
+        ]);
+        $parent->assignRole('parent');
+
+        try {
+            $this->sendParentApprovalEmail($student, $guardianEmail, $tempPassword);
+        } catch (\Exception $e) {
+            Log::warning("Parent credentials email failed [{$student->id}]: " . $e->getMessage());
         }
-        // If parent already exists → just link (future: ParentStudent pivot table)
     }
 
-    // ── Student credentials email ──────────────────────────
-    private function sendStudentCredentialsEmail(Application $app, Student $student, string $email, string $pass): void
+    // ── Email: student portal credentials ─────────────────
+    private function sendStudentApprovalEmail(Student $student, string $email, string $pass): void
     {
-        $name = $student->first_name . ' ' . $student->last_name;
+        $name = $student->full_name;
+        $sid  = $student->student_id;
         $body = <<<TEXT
 Dear {$name},
 
-Your student portal account has been created.
+Congratulations! Your application to My Messiah School of Cavite (MMSC) has been APPROVED.
+
+Your student portal account has been created. You may now log in to view your enrollment status and other details.
 
 STUDENT ACCOUNT DETAILS
 ==================================================
-Student ID:           {$student->student_id}
+Student ID:           {$sid}
 School Email:         {$email}
-Temporary Password:   {$pass} (Your Application Reference No.)
+Temporary Password:   {$pass}
 
 LOGIN INSTRUCTIONS
 ==================================================
-Portal URL:  https://portal.mmsc.edu.ph
-Username:    {$email}
-Password:    {$pass}
+Portal URL: https://portal.mmsc.edu.ph
+Username:   {$email}
+Password:   {$pass}
 
-1. Go to the portal URL above
-2. Log in using your school email and temporary password
-3. You will be asked to change your password on first login
-
-PASSWORD RESET
-==================================================
-If you forget your password, use "Forgot Password".
-A reset link will be sent to: {$app->personal_email}
-
+Please change your password after your first login.
 For support: it@mmsc.edu.ph
 
 Registrar's Office — My Messiah School of Cavite
 TEXT;
 
-        Mail::raw($body, function ($mail) use ($app, $name, $email) {
+        Mail::raw($body, function ($mail) use ($student, $name) {
             $mail->from('registrar@mmsc.edu.ph', 'MMSC Registrar')
-                 ->to($app->personal_email, $name)
-                 ->subject("Your MMSC Student Portal Account — {$name}");
-            if ($app->guardian_email) {
-                $mail->cc($app->guardian_email, $app->guardian_name ?? 'Guardian');
+                 ->to($student->personal_email, $name)
+                 ->subject('MMSC Application Approved — Your Student Portal Account');
+            if ($student->guardian_email) {
+                $mail->cc($student->guardian_email, $student->guardian_name ?? 'Guardian');
             }
         });
     }
 
-    // ── Parent credentials email ───────────────────────────
-    private function sendParentCredentialsEmail(Application $app, Student $student, string $guardianEmail, string $pass): void
+    // ── Email: parent portal credentials ──────────────────
+    private function sendParentApprovalEmail(Student $student, string $guardianEmail, string $pass): void
     {
-        $parentName  = $app->guardian_name ?? 'Parent/Guardian';
-        $studentName = $student->first_name . ' ' . $student->last_name;
-        $body = <<<TEXT
+        $parentName  = $student->guardian_name ?? 'Parent/Guardian';
+        $studentName = $student->full_name;
+        $grade       = $student->grade_level ?? '—';
+        $body        = <<<TEXT
 Dear {$parentName},
 
-Your MMSC parent portal account has been created. This account allows you to monitor your child's academic records.
+Your child {$studentName}'s application to My Messiah School of Cavite (MMSC) has been APPROVED.
+A parent portal account has been created for you to monitor their enrollment and academic progress.
 
 PARENT ACCOUNT DETAILS
 ==================================================
 Email:              {$guardianEmail}
-Temporary Password: {$pass} (Same as your child's reference number)
+Temporary Password: {$pass}
 
 LINKED STUDENT
 ==================================================
-Student: {$studentName}
-Student ID: {$student->student_id}
-Grade Level: {$app->incoming_grade_level}
+Student:     {$studentName}
+Student ID:  {$student->student_id}
+Grade Level: {$grade}
 
 LOGIN
 ==================================================
@@ -605,16 +648,15 @@ Username:      {$guardianEmail}
 Password:      {$pass}
 
 Please change your password after your first login.
-
 For support: it@mmsc.edu.ph
 
 Registrar's Office — My Messiah School of Cavite
 TEXT;
 
-        Mail::raw($body, function ($mail) use ($guardianEmail, $parentName, $studentName) {
+        Mail::raw($body, function ($mail) use ($guardianEmail, $parentName) {
             $mail->from('registrar@mmsc.edu.ph', 'MMSC Registrar')
                  ->to($guardianEmail, $parentName)
-                 ->subject("Your MMSC Parent Portal Account — {$studentName}");
+                 ->subject('MMSC — Parent Portal Account Created');
         });
     }
 

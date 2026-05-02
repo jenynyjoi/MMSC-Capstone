@@ -67,17 +67,21 @@
                         <span class="text-[10px] font-medium uppercase tracking-wide text-slate-400">Student Category</span>
                         <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold">Editable</span>
                     </div>
+                    {{-- Static options always in DOM so x-model can find them regardless of render order --}}
                     <select x-model="editableCategory" @change="onCategoryChange()"
                         class="w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-3 py-2 text-xs text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0d4c8f]">
-                        <option value="Regular Payee">Regular Payee</option>
-                        <template x-if="isJhs">
-                            <option value="ESC Grantee">ESC Grantee</option>
-                        </template>
-                        <template x-if="isShs">
-                            <option value="SHS Voucher Recipient">SHS Voucher Recipient</option>
-                        </template>
+                        <option value="Regular Payee"
+                            x-text="isShs ? 'Regular Payee (No subsidy — ₱17,500)' : 'Regular Payee'"></option>
+                        <option value="ESC Grantee"
+                            x-show="isJhs && !isShs">ESC Grantee</option>
+                        <option value="MMSC JHS Completer (ESC Applied)"
+                            x-show="isShs">MMSC JHS Completer — ESC Applied (₱3,500)</option>
+                        <option value="ESC Private JHS Completer"
+                            x-show="isShs">ESC Private JHS Completer (₱3,500)</option>
+                        <option value="Public JHS Graduate"
+                            x-show="isShs">Public JHS Graduate — FREE (₱0)</option>
                     </select>
-                    <p x-show="editableCategory !== cfg.studentCategory"
+                    <p x-show="editableCategory !== cfg.studentCategory && cfg.studentCategory !== 'SHS Voucher Recipient'"
                         class="mt-1 text-[10px] text-amber-600 font-semibold">
                         ⚠ Changed from original: <span x-text="cfg.studentCategory"></span>
                     </p>
@@ -98,8 +102,24 @@
                 <p class="text-xs font-semibold text-slate-700 dark:text-slate-200" x-text="paymentTypeInfo"></p>
             </div>
 
-            {{-- Plan selector --}}
-            <div>
+            {{-- FREE tuition notice (SHS Plan D — Public JHS Graduate) --}}
+            <template x-if="isShs && editableCategory === 'Public JHS Graduate'">
+                <div class="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-800/50">
+                        <iconify-icon icon="solar:shield-check-bold" width="16" class="text-green-600 dark:text-green-400"></iconify-icon>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-green-700 dark:text-green-400">Tuition Fully Subsidized — FREE</p>
+                        <p class="text-[11px] text-green-600 dark:text-green-500 mt-0.5 leading-snug">
+                            This student is a Public JHS Graduate covered by the SHS Voucher Program.<br>
+                            <span class="font-semibold">Only the Miscellaneous Fee is due.</span>
+                        </p>
+                    </div>
+                </div>
+            </template>
+
+            {{-- Plan selector (hidden for all SHS — plan is determined by category, always cash basis) --}}
+            <div x-show="!isShs">
                 <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
                     <span x-text="isShs ? 'Payment Option' : 'Payment Plan'"></span>
                     <span class="text-red-500">*</span>
@@ -127,7 +147,7 @@
                 </div>
             </div>
 
-            <div class="border-t border-slate-100 dark:border-dark-border"></div>
+            <div x-show="selectedPlanKey" class="border-t border-slate-100 dark:border-dark-border"></div>
 
             {{-- Payment Status (only shown after plan selected; auto-set for Plan A) --}}
             <div x-show="selectedPlanKey">
@@ -159,8 +179,10 @@
 
                         {{-- Downpayment / Tuition --}}
                         <div class="flex justify-between px-4 py-2">
-                            <span class="text-slate-500" x-text="monthlyMonths > 0 ? 'Downpayment (due upon enrollment)' : 'Tuition Fee'"></span>
-                            <span class="font-semibold text-slate-700 dark:text-slate-200" x-text="'₱' + fcFmt(enrollmentFee)"></span>
+                            <span class="text-slate-500" x-text="monthlyMonths > 0 ? 'Downpayment (due upon enrollment)' : (enrollmentFee === 0 ? 'Tuition Fee (Fully Subsidized)' : 'Tuition Fee')"></span>
+                            <span class="font-semibold"
+                                :class="enrollmentFee === 0 && monthlyMonths === 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-slate-200'"
+                                x-text="enrollmentFee === 0 && monthlyMonths === 0 ? 'FREE' : '₱' + fcFmt(enrollmentFee)"></span>
                         </div>
 
                         {{-- Monthly schedule table --}}
@@ -208,6 +230,17 @@
                             <span class="font-bold text-slate-700 dark:text-slate-200">Total Assessment</span>
                             <span class="font-bold text-[#0d4c8f] dark:text-blue-400" x-text="'₱' + fcFmt(fcTotalAssessment)"></span>
                         </div>
+
+                        {{-- Free-tuition callout: remaining balance = misc fee only --}}
+                        <template x-if="enrollmentFee === 0 && monthlyMonths === 0 && fcTotalAssessment > 0">
+                            <div class="flex justify-between items-center px-4 py-2 bg-green-50 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
+                                <div>
+                                    <span class="text-xs font-bold text-green-700 dark:text-green-400">Balance Due</span>
+                                    <span class="block text-[10px] text-green-600 dark:text-green-500">Tuition fully subsidized — only miscellaneous fee remains</span>
+                                </div>
+                                <span class="text-sm font-bold text-green-700 dark:text-green-400" x-text="'₱' + fcFmt(fcTotalAssessment)"></span>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -256,18 +289,31 @@
 <script>
 // ── Plan data ──────────────────────────────────────────────────────────
 const FC_PLANS = {
-    elem_1_3:   { A:[14600,0,0],  B:[5600,1000,9],  C:[4700,1100,9],  D:[3800,1100,9] },
+    elem_1_3:   { A:[14600,0,0],  B:[5600,1000,9],  C:[4700,1100,9],  D:[3800,1200,9] },
     elem_4_6:   { A:[15500,0,0],  B:[6500,1000,9],  C:[5600,1100,9],  D:[4700,1200,9] },
     jhs_regular:{ A:[16500,0,0],  B:[7500,1000,9],  C:[6600,1100,9],  D:[5700,1200,9] },
     jhs_esc:    { A:[7500,0,0],   B:[3000,500,9]                                       },
+    // SHS — all one-time (no installment)
+    // A = Regular payee (no subsidy)                → ₱17,500
+    // B = MMSC JHS Completer with ESC applied       → ₱3,500
+    // C = ESC Completer from private JHS (non-MMSC) → ₱3,500
+    // D = Public JHS Graduate (fully subsidized)    → ₱0 (misc only, no referral)
     shs:        { A:[17500,0,0],  B:[3500,0,0],     C:[3500,0,0],     D:[0,0,0]       },
 };
 
 const FC_SHS_LABELS = {
-    A: 'Regular Payee (No voucher)',
-    B: 'MMSC Graduate – ESC Applied (Old Student)',
-    C: 'ESC Graduate from Private JHS',
-    D: 'Public JHS Graduate (FREE tuition)',
+    A: 'Regular Payee — No subsidy (₱17,500)',
+    B: 'MMSC JHS Completer — ESC Applied (₱3,500)',
+    C: 'ESC Private JHS Completer (₱3,500)',
+    D: 'Public JHS Graduate — FREE (₱0 tuition)',
+};
+
+// SHS category → plan key map
+const FC_SHS_CAT_TO_PLAN = {
+    'Regular Payee':                      'A',
+    'MMSC JHS Completer (ESC Applied)':   'B',
+    'ESC Private JHS Completer':          'C',
+    'Public JHS Graduate':                'D',
 };
 
 const FC_MISC_FEES = {
@@ -288,9 +334,9 @@ const FC_NON_SHS_LABELS = {
 function fcResolvePlanGroup(gradeLevel, category) {
     const gl  = (gradeLevel || '').toLowerCase();
     const cat = (category  || '').toLowerCase();
-    if (/grade\s*[123]|kinder/i.test(gl))            return 'elem_1_3';
-    if (/grade\s*[456]/i.test(gl))                   return 'elem_4_6';
-    if (/grade\s*(7|8|9|10)|junior/i.test(gl))       return cat.includes('esc') ? 'jhs_esc' : 'jhs_regular';
+    if (/grade\s*[123]\b/i.test(gl))              return 'elem_1_3';
+    if (/grade\s*[456]\b/i.test(gl))              return 'elem_4_6';
+    if (/grade\s*(7|8|9|10)\b|junior/i.test(gl))  return cat.includes('esc') ? 'jhs_esc' : 'jhs_regular';
     return 'shs';
 }
 
@@ -335,12 +381,16 @@ function financeConfigModal() {
         },
 
         get paymentTypeInfo() {
-            const cat = (this.editableCategory || '').toLowerCase();
             if (this.isShs) {
-                if (cat.includes('voucher')) return 'SHS Voucher Recipient — Applicable subsidy based on previous JHS type';
-                return 'Senior High School — Regular Payee';
+                const shsInfo = {
+                    'Regular Payee':                    'Regular Payee — Full tuition ₱17,500 (one-time payment)',
+                    'MMSC JHS Completer (ESC Applied)': 'MMSC JHS Completer with ESC — Subsidized ₱3,500',
+                    'ESC Private JHS Completer':        'ESC Graduate from Private JHS — Subsidized ₱3,500',
+                    'Public JHS Graduate':              'Public JHS Graduate — Fully subsidized (₱0 tuition + misc only)',
+                };
+                return shsInfo[this.editableCategory] || 'Senior High School';
             }
-            if (cat.includes('esc')) return 'ESC Grantee — Subsidized JHS rate applies';
+            if ((this.editableCategory || '').toLowerCase().includes('esc')) return 'ESC Grantee — Subsidized JHS rate applies';
             return 'Regular Payee — Standard payment rate applies';
         },
 
@@ -352,10 +402,30 @@ function financeConfigModal() {
         },
 
         async openModal(c) {
-            this.cfg             = c || {};
-            this.onSavedCb       = c.onSaved || null;
-            this.editableCategory= c.studentCategory || 'Regular Payee';
-            this.selectedPlanKey = '';
+            this.cfg       = c || {};
+            this.onSavedCb = c.onSaved || null;
+
+            // Resolve the correct editable category.
+            // For SHS Voucher Recipients, subsidy_prev_school_type carries the specific
+            // plan type (public_jhs / private_jhs_esc / private_jhs_no_esc).
+            const subsToShsCat = {
+                'private_jhs_no_esc': 'MMSC JHS Completer (ESC Applied)',
+                'private_jhs_esc':    'ESC Private JHS Completer',
+                'public_jhs':         'Public JHS Graduate',
+            };
+            const validShsCats = new Set(Object.values(subsToShsCat).concat(['Regular Payee']));
+            let resolvedCat = c.studentCategory || 'Regular Payee';
+
+            if (c.subsidyPrevSchoolType && subsToShsCat[c.subsidyPrevSchoolType]) {
+                resolvedCat = subsToShsCat[c.subsidyPrevSchoolType];
+            } else if (resolvedCat === 'SHS Voucher Recipient') {
+                // No subsidy type info — "SHS Voucher Recipient" is not a valid select
+                // option, so default to Regular Payee; admin can adjust manually.
+                resolvedCat = 'Regular Payee';
+            }
+
+            this.editableCategory = resolvedCat;
+            this.selectedPlanKey  = '';
             this.miscFee = 0; this.referralCount = 0;
             this.noReferral = false; this.isFullPayment = false;
             this.fcStatus = ''; this.fcTotalAssessment = 0;
@@ -366,11 +436,7 @@ function financeConfigModal() {
             this.studentLabel = c.studentName ? `${c.studentName} — ${gl}` : gl;
             this._rebuildPlans(gl, this.editableCategory);
 
-            // Auto-select SHS based on category
-            if (this.isShs) {
-                if (this.editableCategory.toLowerCase().includes('voucher')) this._doSelect('B');
-                else if (this.editableCategory.toLowerCase().includes('public')) this._doSelect('C');
-            }
+            if (this.isShs) this._doSelect(FC_SHS_CAT_TO_PLAN[this.editableCategory] || 'A');
 
             this.open = true;
             this.loading = true;
@@ -415,11 +481,8 @@ function financeConfigModal() {
             this.fcTotalAssessment= 0;
             this.fcAmountPaid     = 0;
             this.fcNextDueDate    = '';
-            // Auto-select for SHS after category switch
-            if (this.isShs) {
-                if (this.editableCategory.toLowerCase().includes('voucher')) this._doSelect('B');
-                else if (this.editableCategory.toLowerCase().includes('public')) this._doSelect('C');
-            }
+            // Auto-select SHS plan when category changes
+            if (this.isShs) this._doSelect(FC_SHS_CAT_TO_PLAN[this.editableCategory] || 'A');
         },
 
         _doSelect(key) {
@@ -433,15 +496,22 @@ function financeConfigModal() {
             this.monthlyAmount   = plan.monthly;
             this.monthlyMonths   = plan.months;
             this.isFullPayment   = plan.months === 0 && plan.enroll > 0;
-            this.noReferral      = this.isShs && plan.key === 'C';
+            this.noReferral      = this.isShs && plan.key === 'D'; // only free (public JHS) has no referral
             if (this.noReferral) this.referralCount = 0;
 
             const misc  = this.autoMiscFee;
             const total = plan.enroll + (plan.monthly * plan.months) + misc;
             this.fcTotalAssessment = total;
 
-            if (plan.months === 0) {
-                // Cash / lump-sum: fully paid at enrollment (tuition + misc)
+            const isFreetuition = plan.enroll === 0 && plan.months === 0;
+
+            if (isFreetuition) {
+                // FREE tuition (SHS Plan D): tuition fully subsidized, only misc fee is the balance
+                this.fcAmountPaid  = 0;
+                this.fcStatus      = 'pending';
+                this.fcNextDueDate = '';
+            } else if (plan.months === 0) {
+                // Full cash (e.g. Plan A): tuition + misc paid in full at enrollment
                 this.fcAmountPaid  = total;
                 this.fcStatus      = 'cleared';
                 this.fcNextDueDate = '';
@@ -466,7 +536,7 @@ function financeConfigModal() {
                 enrollment_fee:   this.enrollmentFee,
                 monthly_amount:   this.monthlyAmount,
                 monthly_months:   this.monthlyMonths,
-                misc_fee:         this.miscFee,
+                misc_fee:         this.autoMiscFee,
                 referral_count:   this.noReferral ? 0 : this.referralCount,
                 no_referral:      this.noReferral,
                 total_fee:        this.fcTotalAssessment,

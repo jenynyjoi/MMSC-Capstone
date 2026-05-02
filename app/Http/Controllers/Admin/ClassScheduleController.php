@@ -171,7 +171,8 @@ class ClassScheduleController extends Controller
             foreach ($days as $day) {
                 $match = $schedules->first(fn($s) =>
                     $s->day_of_week === $day &&
-                    substr($s->time_start, 0, 5) === $slot['start']
+                    substr($s->time_start, 0, 5) >= $slot['start'] &&
+                    substr($s->time_start, 0, 5) < $slot['end']
                 );
                 $grid[$slot['start']][$day] = $match ? [
                     'schedule_id'   => $match->id,
@@ -240,7 +241,15 @@ class ClassScheduleController extends Controller
             'room'          => 'nullable|string|max:100',
         ]);
 
-        $allocation = SubjectAllocation::findOrFail($request->allocation_id);
+        $allocation = SubjectAllocation::with('teacher')->findOrFail($request->allocation_id);
+
+        // Block scheduling subjects without a teacher assigned
+        if (!$allocation->teacher_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This subject has no teacher assigned. Please assign a teacher before scheduling.',
+            ], 422);
+        }
 
         // Conflict check
         $conflicts = $this->detectConflicts($request->all(), $allocation, null);
@@ -458,104 +467,113 @@ class ClassScheduleController extends Controller
         }
 
         // ── Load unfinished allocations ────────────────────────
-        $allocations = SubjectAllocation::with(['subject', 'schedules'])
+        $allAllocs = SubjectAllocation::with(['subject', 'schedules'])
             ->where('section_id', $section->id)
             ->where('school_year', $schoolYear)
-            ->get()
-            ->filter(fn($a) => (int) ($a->subject?->meetings_per_week ?? 0) > 0)
-            ->sortByDesc(fn($a) => (int) ($a->subject?->meetings_per_week ?? 0));
+            ->get();
 
         $assigned = [];
         $skipped  = [];
 
+        // Pre-reject teacher-less subjects — they cannot be auto-assigned
+        foreach ($allAllocs->filter(fn($a) => !$a->teacher_id) as $noTeacher) {
+            $skipped[] = [
+                'subject' => $noTeacher->subject_name,
+                'needed'  => (int) ($noTeacher->subject?->meetings_per_week ?? 0),
+                'placed'  => 0,
+                'reason'  => 'No teacher assigned. Assign a teacher before scheduling.',
+            ];
+        }
+
+        $allocations = $allAllocs
+            ->filter(fn($a) => $a->teacher_id && (int) ($a->subject?->meetings_per_week ?? 0) > 0)
+            ->sortByDesc(fn($a) => (int) ($a->subject?->meetings_per_week ?? 0));
+
+        // Track how many more meetings each allocation still needs
+        $remaining = [];
+        foreach ($allocations as $alloc) {
+            $mpw = (int) ($alloc->subject?->meetings_per_week ?? 0);
+            $remaining[$alloc->id] = max(0, $mpw - $alloc->schedules->count());
+        }
+
+        // Day-centric fill: visit every slot in every day in order.
+        // For each slot, pick the highest-priority unplaced subject that fits
+        // (no same subject twice on a day, no teacher/section conflict).
         DB::transaction(function () use (
             $allocations, $days, $classSlotStarts,
             $toMin, $fmtTime, $overlaps, $inBreak,
             &$sectionBusy, &$teacherBusy, &$subjectDays,
-            &$assigned, &$skipped,
+            &$assigned, &$remaining,
             $timeEnd
         ) {
-            foreach ($allocations as $alloc) {
-                $mpw       = (int) ($alloc->subject?->meetings_per_week ?? 0);
-                $hpm       = (float) ($alloc->subject?->hours_per_meeting ?? 0);
-                $durMin    = $hpm > 0 ? (int) round($hpm * 60) : null;
-                $teacherId = $alloc->teacher_id;
+            foreach ($days as $day) {
+                // Sort allocations by remaining need (most urgent first) at start of each day
+                $dayAllocs = $allocations->sortByDesc(fn($a) => $remaining[$a->id] ?? 0);
 
-                $existing = $alloc->schedules->count();
-                $needed   = $mpw - $existing;
-                if ($needed <= 0) continue;
+                foreach ($classSlotStarts as $slot) {
+                    foreach ($dayAllocs as $alloc) {
+                        // Skip if fully scheduled
+                        if (($remaining[$alloc->id] ?? 0) <= 0) continue;
 
-                $daysUsed    = $subjectDays[$alloc->id] ?? [];
-                $placed      = 0;
+                        // No same subject on same day
+                        if (in_array($day, $subjectDays[$alloc->id] ?? [])) continue;
 
-                // Try each day in order
-                foreach ($days as $day) {
-                    if ($placed >= $needed) break;
+                        $hpm    = (float) ($alloc->subject?->hours_per_meeting ?? 0);
+                        $durMin = $hpm > 0 ? (int) round($hpm * 60) : null;
+                        $tid    = $alloc->teacher_id;
 
-                    // No same subject on same day
-                    if (in_array($day, $daysUsed)) continue;
+                        $sMin = $toMin($slot['start']);
+                        $sEnd = $durMin !== null ? $fmtTime($sMin + $durMin) : $slot['end'];
 
-                    // Find earliest free slot on this day
-                    foreach ($classSlotStarts as $slot) {
-                        $slotStartMin = $toMin($slot['start']);
-                        $slotEnd      = $durMin !== null
-                            ? $fmtTime($slotStartMin + $durMin)
-                            : $slot['end'];
-
-                        // Must end before/at time_end
-                        if ($slotEnd > $timeEnd) continue;
-
-                        // Must not overlap a break
-                        if ($inBreak($slot['start'], $slotEnd)) continue;
-
-                        // Must not conflict with section
-                        if ($overlaps($slot['start'], $slotEnd, $sectionBusy[$day])) continue;
-
-                        // Must not conflict with teacher
-                        if ($teacherId &&
-                            $overlaps($slot['start'], $slotEnd, $teacherBusy[$teacherId][$day] ?? [])
-                        ) continue;
+                        if ($sEnd > $timeEnd) continue;
+                        if ($inBreak($slot['start'], $sEnd)) continue;
+                        if ($overlaps($slot['start'], $sEnd, $sectionBusy[$day])) continue;
+                        if ($tid && $overlaps($slot['start'], $sEnd, $teacherBusy[$tid][$day] ?? [])) continue;
 
                         // ✅ Place it
                         SubjectSchedule::create([
                             'allocation_id' => $alloc->id,
                             'day_of_week'   => $day,
                             'time_start'    => $slot['start'],
-                            'time_end'      => $slotEnd,
+                            'time_end'      => $sEnd,
                             'room'          => null,
                         ]);
 
-                        // Update busy maps so subsequent allocations see this slot taken
-                        $sectionBusy[$day][] = ['start' => $slot['start'], 'end' => $slotEnd];
-                        if ($teacherId) {
-                            if (!isset($teacherBusy[$teacherId][$day])) $teacherBusy[$teacherId][$day] = [];
-                            $teacherBusy[$teacherId][$day][] = ['start' => $slot['start'], 'end' => $slotEnd];
+                        $sectionBusy[$day][] = ['start' => $slot['start'], 'end' => $sEnd];
+                        if ($tid) {
+                            if (!isset($teacherBusy[$tid][$day])) $teacherBusy[$tid][$day] = [];
+                            $teacherBusy[$tid][$day][] = ['start' => $slot['start'], 'end' => $sEnd];
                         }
                         $subjectDays[$alloc->id][] = $day;
-                        $daysUsed[] = $day;
+                        $remaining[$alloc->id]--;
 
                         $assigned[] = [
                             'subject' => $alloc->subject_name,
                             'day'     => $day,
-                            'time'    => $slot['start'] . '–' . $slotEnd,
+                            'time'    => $slot['start'] . '–' . $sEnd,
                         ];
-                        $placed++;
-                        break; // move to next day
+                        break; // slot filled — move to the next slot
                     }
-                }
-
-                if ($placed < $needed) {
-                    $skipped[] = [
-                        'subject' => $alloc->subject_name,
-                        'needed'  => $needed,
-                        'placed'  => $placed,
-                        'reason'  => $placed === 0
-                            ? 'No conflict-free slot found for any weekday.'
-                            : "Only {$placed}/{$needed} meetings could be placed — remaining days have conflicts.",
-                    ];
                 }
             }
         });
+
+        // Collect allocations that still have unplaced meetings
+        foreach ($allocations as $alloc) {
+            $stillNeeded = $remaining[$alloc->id] ?? 0;
+            if ($stillNeeded > 0) {
+                $mpw         = (int) ($alloc->subject?->meetings_per_week ?? 0);
+                $placedCount = ($mpw - $alloc->schedules->count()) - $stillNeeded;
+                $skipped[] = [
+                    'subject' => $alloc->subject_name,
+                    'needed'  => $stillNeeded,
+                    'placed'  => $placedCount,
+                    'reason'  => $placedCount === 0
+                        ? 'No conflict-free slot found for any weekday.'
+                        : "Only {$placedCount}/{$mpw} meetings placed — remaining slots have conflicts.",
+                ];
+            }
+        }
 
         $total = count($assigned);
         $msg   = $total > 0
@@ -618,11 +636,19 @@ class ClassScheduleController extends Controller
                 ->first();
 
             if ($tchConflict && $tchConflict->allocation->section_id !== $sectionId) {
+                // Collect all busy times for this teacher on this day to show in suggestion
+                $busyTimes = SubjectSchedule::where('day_of_week', $day)
+                    ->whereHas('allocation', fn($q) => $q->where('teacher_id', $teacherId)->where('school_year', $schoolYear))
+                    ->when($excludeScheduleId, fn($q) => $q->where('id', '!=', $excludeScheduleId))
+                    ->get()
+                    ->map(fn($s) => substr($s->time_start, 0, 5) . '–' . substr($s->time_end, 0, 5))
+                    ->join(', ');
+
                 $conflicts[] = [
                     'type'     => 'teacher',
                     'severity' => 'error',
-                    'message'  => 'Teacher is already teaching in section "' . ($tchConflict->allocation->section->section_name ?? '?') . '" at this time.',
-                    'fix'      => 'Assign a different teacher or use a different time slot.',
+                    'message'  => 'Teacher is already teaching "' . ($tchConflict->allocation->subject_name ?? '?') . '" in section "' . ($tchConflict->allocation->section->section_name ?? '?') . '" at ' . substr($tchConflict->time_start, 0, 5) . '–' . substr($tchConflict->time_end, 0, 5) . ' on ' . $day . '.',
+                    'fix'      => 'Teacher is busy on ' . $day . ' at: ' . $busyTimes . '. Choose a different time slot, a different day, or assign another teacher.',
                 ];
             }
         }
@@ -684,7 +710,29 @@ class ClassScheduleController extends Controller
             }
         }
 
-        // 6. Duration mismatch (hours_per_meeting)
+        // 6. Same subject already scheduled on this day
+        $sameDayConflict = SubjectSchedule::where('allocation_id', $allocation->id)
+            ->where('day_of_week', $day)
+            ->when($excludeScheduleId, fn($q) => $q->where('id', '!=', $excludeScheduleId))
+            ->first();
+
+        if ($sameDayConflict) {
+            $scheduledDays = SubjectSchedule::where('allocation_id', $allocation->id)
+                ->when($excludeScheduleId, fn($q) => $q->where('id', '!=', $excludeScheduleId))
+                ->pluck('day_of_week')->toArray();
+            $allDays  = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            $freeDays = array_values(array_diff($allDays, $scheduledDays));
+            $conflicts[] = [
+                'type'     => 'same_day_subject',
+                'severity' => 'error',
+                'message'  => '"' . $allocation->subject_name . '" is already scheduled on ' . $day . '.',
+                'fix'      => !empty($freeDays)
+                    ? 'Available days to schedule this subject: ' . implode(', ', $freeDays) . '.'
+                    : 'All weekdays are already occupied for this subject.',
+            ];
+        }
+
+        // 7. Duration mismatch (hours_per_meeting)
         $hpm = (float) ($allocation->subject?->hours_per_meeting ?? 0);
         if ($hpm > 0) {
             $toMin = fn(string $t): int => (int) explode(':', $t)[0] * 60 + (int) explode(':', $t)[1];

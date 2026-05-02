@@ -74,6 +74,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/admission/{id}/document/{type}', [AdmissionReviewController::class, 'downloadDocument'])
             ->name('admission.document')
             ->where('type', 'psa|report_card|good_moral');
+        Route::get('/admission/{id}/documents-data',  [AdmissionReviewController::class, 'getDocumentsData'])->name('admission.documents-data');
         Route::put('/admission/{id}/status',          [AdmissionReviewController::class, 'updateStatus'])->name('admission.status');
         Route::post('/admission/{id}/documents',      [AdmissionReviewController::class, 'updateDocuments'])->name('admission.documents');
         Route::post('/admission/bulk-status',                     [AdmissionReviewController::class, 'bulkUpdateStatus'])->name('admission.bulk-status');
@@ -84,6 +85,8 @@ Route::middleware(['auth', 'role:admin'])
         // ── Enrollment ───────────────────────────────────────
         Route::get('/enrollment/enroll',             [EnrollController::class, 'index'])->name('enrollment.enroll');
         Route::get('/enrollment/promote',            [EnrollController::class, 'promote'])->name('enrollment.promote');
+        Route::post('/enrollment/promote/single',    [EnrollController::class, 'promoteSingle'])->name('enrollment.promote.single');
+        Route::post('/enrollment/promote/bulk',      [EnrollController::class, 'promoteBulk'])->name('enrollment.promote.bulk');
         Route::get('/enrollment/sections',           [EnrollController::class, 'getAvailableSections'])->name('enrollment.sections');
         Route::post('/enrollment/assign',            [EnrollController::class, 'assignSection'])->name('enrollment.assign');
         Route::post('/enrollment/edit-section',      [EnrollController::class, 'editSection'])->name('enrollment.edit-section');
@@ -115,8 +118,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/student-records/profile/{id}',   [StudentRecordController::class, 'show'])->name('student-records.profile');
         Route::patch('/student-records/profile/{id}', [StudentRecordController::class, 'updateProfile'])->name('student-records.update-profile');
         Route::get('/student-records/withdrawn',      [StudentRecordController::class, 'withdrawn'])->name('student-records.withdrawn');
-        Route::get('/student-records/archives',       [AdminController::class, 'studentArchives'])->name('student-records.archives');
-        Route::post('/student-records/withdraw',      [StudentRecordController::class, 'withdraw'])->name('student-records.withdraw');
+        Route::get('/student-records/archives',        [StudentRecordController::class, 'archives'])->name('student-records.archives');
+        Route::post('/student-records/archive',          [StudentRecordController::class, 'archive'])->name('student-records.archive');
+        Route::post('/student-records/archive/restore', [StudentRecordController::class, 'restoreArchive'])->name('student-records.archive.restore');
+        Route::post('/student-records/withdraw',       [StudentRecordController::class, 'withdraw'])->name('student-records.withdraw');
         Route::post('/student-records/send-notice',   [StudentRecordController::class, 'sendNotice'])->name('student-records.send-notice');
         Route::post('/student-records/export',        [StudentRecordController::class, 'export'])->name('student-records.export');
 
@@ -266,14 +271,24 @@ Route::middleware(['auth', 'role:admin'])
         Route::patch('/settings/account/password',   [AdminController::class, 'updatePassword'])->name('settings.account.password');
         Route::post('/settings/account/photo',       [AdminController::class, 'updateProfilePhoto'])->name('settings.account.photo');
         Route::get('/settings/user-management', [AdminController::class, 'settingsUserManagement'])->name('settings.user-management');
-        Route::get('/settings/general',         [AdminController::class, 'settingsGeneral'])->name('settings.general');
+        Route::get('/settings/general',          [AdminController::class, 'settingsGeneral'])->name('settings.general');
+        Route::post('/settings/general',         [AdminController::class, 'saveGeneralSettings'])->name('settings.general.save');
     });
 
 // ── OTHER ROLES ───────────────────────────────────────────────
 Route::middleware(['auth', 'role:teacher'])->prefix('teacher')->name('teacher.')
     ->group(function () {
-        Route::get('/dashboard',    [TeacherController::class, 'index'])->name('dashboard');
-        Route::get('/my-subjects',  [TeacherController::class, 'mySubjects'])->name('my-subjects');
+        Route::get('/dashboard',          [TeacherController::class, 'index'])->name('dashboard');
+        Route::get('/my-subjects',        [TeacherController::class, 'mySubjects'])->name('my-subjects');
+        Route::get('/grades',             [TeacherController::class, 'grades'])->name('grades');
+        Route::get('/attendance',         [TeacherController::class, 'attendance'])->name('attendance');
+        Route::get('/schedule',           [TeacherController::class, 'schedule'])->name('schedule');
+        Route::get('/announcements',      [TeacherController::class, 'announcements'])->name('announcements');
+        Route::get('/classes/list',       [TeacherController::class, 'classesList'])->name('classes.list');
+        Route::get('/classes/roster',     [TeacherController::class, 'classesRoster'])->name('classes.roster');
+        Route::get('/settings/account',   [TeacherController::class, 'settingsAccount'])->name('settings.account');
+        Route::patch('/settings/account', [TeacherController::class, 'updateProfile'])->name('settings.account.update');
+        Route::patch('/settings/password',[TeacherController::class, 'updatePassword'])->name('settings.account.password');
     });
 
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')

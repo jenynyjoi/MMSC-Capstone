@@ -190,11 +190,14 @@
                                             referenceNumber: '{{ addslashes($app->reference_number) }}',
                                             studentId: null,
                                             gradeLevel: '{{ addslashes($app->incoming_grade_level ?? $app->applied_level) }}',
-                                            studentCategory: '{{ addslashes($app->student_category ?? 'Regular') }}',
+                                            studentCategory: '{{ addslashes($app->student_category ?? 'Regular Payee') }}',
+                                            subsidyPrevSchoolType: '{{ addslashes($app->subsidy_prev_school_type ?? '') }}',
                                             schoolYear: '{{ $app->school_year }}',
                                             studentName: '{{ addslashes($app->first_name.' '.$app->last_name) }}',
                                             onSaved: function() {
-                                                rowAction({{ $app->id }},'approved','{{ addslashes($app->first_name.' '.$app->last_name) }}','{{ $app->application_status }}');
+                                                openDynamicRecordsModalApprove({{ $app->id }}, function() {
+                                                    rowAction({{ $app->id }},'approved','{{ addslashes($app->first_name.' '.$app->last_name) }}','{{ $app->application_status }}');
+                                                });
                                             }
                                         })"
                                         class="flex w-full items-center gap-2 px-3 py-2 text-xs text-green-600 hover:bg-green-50 transition-colors">
@@ -378,6 +381,9 @@
 {{-- Finance Modals --}}
 @include('admin.partials.finance-update-modal')
 @include('admin.partials.finance-config-modal')
+
+{{-- Records / Document Verification Modal (dynamic, for table-row approve) --}}
+@include('admin.partials.records-modal-dynamic')
 
 @push('scripts')
 <script>

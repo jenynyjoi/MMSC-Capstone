@@ -131,7 +131,7 @@
                         <select name="mother_tongue" class="field-input"
                             onfocus="this.style.borderColor='#0d4c8f'" onblur="this.style.borderColor='#e2e8f0'">
                             <option value="">— Select —</option>
-                            @foreach(['Filipino','Tagalog','Bisaya','Ilocano','Hiligaynon','Bikolano','Waray','Other'] as $mt)
+                            @foreach(['Filipino','Bisaya','Ilocano','Hiligaynon','Bikolano','Waray','Other'] as $mt)
                             <option value="{{ $mt }}" {{ old('mother_tongue', $data['mother_tongue'] ?? '') === $mt ? 'selected' : '' }}>{{ $mt }}</option>
                             @endforeach
                         </select>
@@ -139,9 +139,16 @@
 
                     <div>
                         <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px;">LRN (Learner Reference No.) <span style="color:#ef4444;">*</span></label>
-                        <input type="text" name="lrn" placeholder="12-digit LRN" class="field-input"
+                       <input type="text" name="lrn" placeholder="12-digit LRN" 
+                            class="field-input"
                             value="{{ old('lrn', $data['lrn'] ?? '') }}"
-                            onfocus="this.style.borderColor='#0d4c8f'" onblur="this.style.borderColor='#e2e8f0'">
+                            pattern="\d{12}" 
+                            maxlength="12"
+                            onfocus="this.style.borderColor='#0d4c8f'" 
+                            onblur="this.style.borderColor='#e2e8f0'" 
+                            required>
+                        @error('lrn')<p style="font-size:0.72rem; color:#ef4444; margin:3px 0 0;">{{ $message }}</p>@enderror
+
                     </div>
 
                     <div>
@@ -173,7 +180,7 @@
 
                     <div>
                         <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px;">Mobile Number <span style="color:#ef4444;">*</span></label>
-                        <input type="tel" name="mobile_number" placeholder="+63 9XX XXX XXXX" class="field-input"
+                        <input type="tel" name="mobile_number" placeholder="09XX XXX XXXX" class="field-input"
                             value="{{ old('mobile_number', $data['mobile_number'] ?? '') }}"
                             onfocus="this.style.borderColor='#0d4c8f'" onblur="this.style.borderColor='#e2e8f0'">
                         @error('mobile_number')<p style="font-size:0.72rem; color:#ef4444; margin:3px 0 0;">{{ $message }}</p>@enderror
@@ -221,7 +228,7 @@
 
                     <div>
                         <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px;">Father's Contact No.</label>
-                        <input type="text" name="father_contact" placeholder="Contact number" class="field-input"
+                        <input type="text" name="father_contact" placeholder="09XX XXX XXXX" class="field-input"
                             value="{{ old('father_contact', $data['father_contact'] ?? '') }}"
                             onfocus="this.style.borderColor='#0d4c8f'" onblur="this.style.borderColor='#e2e8f0'">
                     </div>
@@ -263,7 +270,7 @@
                         </div>
 
                         <div>
-                            <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px;">Relationship</label>
+                            <label style="display:block; font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px;">Relationship <span style="color:#ef4444;">*</span></label>
                             <input type="text" name="guardian_relationship" placeholder="e.g. Aunt, Uncle" class="field-input"
                                 value="{{ old('guardian_relationship', $data['guardian_relationship'] ?? '') }}"
                                 onfocus="this.style.borderColor='#0d4c8f'" onblur="this.style.borderColor='#e2e8f0'">

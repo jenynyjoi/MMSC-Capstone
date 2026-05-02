@@ -1,10 +1,8 @@
 {{--
-    Finance Update / Details / Receipt / Reminder Modal
+    Finance Update / Details / Reminder Modal
     Exposes:
-        window.openUpdateFeeModal(studentId)       — record payment
+        window.openUpdateFeeModal(studentId)       — confirm payment
         window.openFinanceDetails(studentId)       — view payment history
-        window.openFinanceReceipt(paymentId)       — view receipt for a specific payment
-        window.openLatestReceipt(studentId)        — view most recent receipt
         window.openFinanceReminder(studentId,name) — send payment reminder
 --}}
 
@@ -26,26 +24,19 @@
                      :class="{
                          'bg-green-100 dark:bg-green-900/30':  mode==='pay',
                          'bg-blue-100 dark:bg-blue-900/30':    mode==='details',
-                         'bg-amber-100 dark:bg-amber-900/30':  mode==='receipt',
                          'bg-violet-100 dark:bg-violet-900/30':mode==='reminder',
                      }">
-                    <iconify-icon x-show="mode==='pay'"      icon="solar:card-bold"          width="18" class="text-green-600 dark:text-green-400"></iconify-icon>
-                    <iconify-icon x-show="mode==='details'"  icon="solar:document-text-bold" width="18" class="text-blue-600 dark:text-blue-400"></iconify-icon>
-                    <iconify-icon x-show="mode==='receipt'"  icon="solar:receipt-bold"       width="18" class="text-amber-600 dark:text-amber-400"></iconify-icon>
-                    <iconify-icon x-show="mode==='reminder'" icon="solar:bell-bing-bold"     width="18" class="text-violet-600 dark:text-violet-400"></iconify-icon>
+                    <iconify-icon x-show="mode==='pay'"      icon="solar:clipboard-check-bold" width="18" class="text-green-600 dark:text-green-400"></iconify-icon>
+                    <iconify-icon x-show="mode==='details'"  icon="solar:document-text-bold"   width="18" class="text-blue-600 dark:text-blue-400"></iconify-icon>
+                    <iconify-icon x-show="mode==='reminder'" icon="solar:bell-bing-bold"       width="18" class="text-violet-600 dark:text-violet-400"></iconify-icon>
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold text-slate-800 dark:text-white"
-                        x-text="mode==='pay' ? 'Record Payment' : mode==='details' ? 'Payment Details' : mode==='receipt' ? 'Official Receipt' : 'Send Payment Reminder'"></h3>
+                        x-text="mode==='pay' ? 'Confirm Payment' : mode==='details' ? 'Payment Details' : 'Send Payment Reminder'"></h3>
                     <p class="text-xs text-slate-500" x-text="studentLabel"></p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <template x-if="mode==='receipt'">
-                    <button @click="printReceipt()" class="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
-                        <iconify-icon icon="solar:printer-bold" width="14"></iconify-icon> Print
-                    </button>
-                </template>
                 <button @click="closeModal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                     <iconify-icon icon="solar:close-circle-linear" width="18"></iconify-icon>
                 </button>
@@ -125,7 +116,7 @@
                 {{-- Amount + Date --}}
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Amount Paid <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Amount Confirmed <span class="text-red-500">*</span></label>
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₱</span>
                             <input type="number" x-model.number="payAmount" min="0.01" step="0.01"
@@ -138,74 +129,9 @@
                         </p>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Payment Date <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Date Confirmed <span class="text-red-500">*</span></label>
                         <input type="date" x-model="payDate" :max="today"
                             class="w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-3 py-2 text-sm text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                {{-- Payment Method --}}
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Payment Method <span class="text-red-500">*</span></label>
-                    <div class="grid grid-cols-2 gap-2">
-                        {{-- Cash --}}
-                        <label :class="payMethodGroup==='cash' ? 'ring-2 ring-[#0d4c8f] border-blue-300 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg hover:bg-slate-50'"
-                            class="flex items-center gap-2.5 rounded-xl border px-4 py-3 cursor-pointer transition-all">
-                            <input type="radio" value="cash" x-model="payMethodGroup" class="sr-only">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-lg"
-                                :class="payMethodGroup==='cash' ? 'bg-blue-100' : 'bg-slate-100 dark:bg-slate-700'">
-                                <iconify-icon icon="solar:banknote-bold" width="16"
-                                    :class="payMethodGroup==='cash' ? 'text-[#0d4c8f]' : 'text-slate-400'"></iconify-icon>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-700 dark:text-white">Cash</p>
-                                <p class="text-[10px] text-slate-400">In-person payment</p>
-                            </div>
-                        </label>
-                        {{-- Online Payment --}}
-                        <label :class="payMethodGroup==='online' ? 'ring-2 ring-violet-500 border-violet-300 bg-violet-50 dark:bg-violet-900/20' : 'border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg hover:bg-slate-50'"
-                            class="flex items-center gap-2.5 rounded-xl border px-4 py-3 cursor-pointer transition-all">
-                            <input type="radio" value="online" x-model="payMethodGroup" class="sr-only">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-lg"
-                                :class="payMethodGroup==='online' ? 'bg-violet-100' : 'bg-slate-100 dark:bg-slate-700'">
-                                <iconify-icon icon="solar:smartphone-bold" width="16"
-                                    :class="payMethodGroup==='online' ? 'text-violet-600' : 'text-slate-400'"></iconify-icon>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-700 dark:text-white">Online Payment</p>
-                                <p class="text-[10px] text-slate-400">GCash, PayMaya, PayPal</p>
-                            </div>
-                        </label>
-                    </div>
-
-                    {{-- Online sub-options --}}
-                    <div x-show="payMethodGroup==='online'" x-transition class="mt-3 space-y-3 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10 p-4">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Select Platform</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <template x-for="p in onlineProviders" :key="p.key">
-                                    <button type="button" @click="onlineProvider = p.key"
-                                        :class="onlineProvider===p.key
-                                            ? 'ring-2 ring-violet-500 border-violet-300 bg-white dark:bg-dark-card'
-                                            : 'border-slate-200 dark:border-dark-border bg-white/60 dark:bg-dark-bg hover:bg-white'"
-                                        class="flex flex-col items-center rounded-xl border px-2 py-2.5 transition-all">
-                                        <iconify-icon :icon="p.icon" width="20" :class="onlineProvider===p.key?'text-violet-600':'text-slate-400'"></iconify-icon>
-                                        <span class="text-[11px] font-semibold mt-1"
-                                            :class="onlineProvider===p.key?'text-violet-700 dark:text-violet-300':'text-slate-600 dark:text-slate-400'"
-                                            x-text="p.label"></span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-                                Reference / Transaction Number <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" x-model="onlineReference"
-                                placeholder="e.g. 1234567890"
-                                class="w-full rounded-lg border border-violet-200 dark:border-dark-border bg-white dark:bg-dark-bg px-3 py-2 text-sm text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <p class="mt-1 text-[10px] text-slate-400">Proof of transaction — required for online payments</p>
-                        </div>
                     </div>
                 </div>
 
@@ -291,14 +217,11 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-semibold text-slate-700 dark:text-slate-300" x-text="p.receipt_number"></p>
                                 <p class="text-[11px] text-slate-400"
-                                   x-text="(p.payment_date||'').substr(0,10)+' · '+(p.payment_method||'').replace('_',' ')+(p.online_reference?' #'+p.online_reference:'')+(p.notes?' · '+p.notes:'')"></p>
+                                   x-text="(p.payment_date||'').substr(0,10)+(p.notes?' · '+p.notes:'')"></p>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-sm font-bold text-green-700 dark:text-green-400" x-text="'₱'+fcFmt(p.amount)"></p>
                             </div>
-                            <button @click="viewReceiptFromPayment(p)" class="ml-1 flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors" title="View Receipt">
-                                <iconify-icon icon="solar:eye-linear" width="13"></iconify-icon>
-                            </button>
                         </div>
                     </template>
                 </div>
@@ -306,95 +229,6 @@
 
             <div x-show="(finance?.payments||[]).length === 0 && !loading" class="text-center text-xs text-slate-400 py-4">No payments recorded yet.</div>
 
-        </div>
-
-        {{-- ── MODE: RECEIPT ─────────────────────────────────── --}}
-        <div x-show="!loading && mode==='receipt'" class="overflow-y-auto flex-1 px-6 py-6" id="receipt-print-area">
-
-            {{-- Printable Receipt --}}
-            <div class="max-w-sm mx-auto space-y-4">
-
-                {{-- School header --}}
-                <div class="text-center border-b border-slate-200 pb-4">
-                    <p class="text-base font-bold text-[#0d4c8f] uppercase tracking-wide">My Messiah School of Cavite</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Official Payment Receipt</p>
-                    <p class="text-[11px] text-slate-400">mmsc.edu.ph</p>
-                </div>
-
-                {{-- Receipt header --}}
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] text-slate-400 uppercase">Receipt No.</p>
-                        <p class="text-sm font-bold text-slate-800 dark:text-white" x-text="receipt?.receipt_number || '—'"></p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] text-slate-400 uppercase">Date</p>
-                        <p class="text-sm font-semibold text-slate-700" x-text="(receipt?.payment_date||'').substr(0,10)"></p>
-                    </div>
-                </div>
-
-                {{-- Student info --}}
-                <div class="rounded-xl bg-slate-50 dark:bg-slate-800/30 px-4 py-3 space-y-1.5">
-                    <div class="flex gap-2">
-                        <span class="text-[10px] text-slate-400 w-24 shrink-0 uppercase font-medium">Student</span>
-                        <span class="text-xs font-semibold text-slate-700 dark:text-white" x-text="receipt?.finance?.student?.first_name + ' ' + receipt?.finance?.student?.last_name"></span>
-                    </div>
-                    <div class="flex gap-2">
-                        <span class="text-[10px] text-slate-400 w-24 shrink-0 uppercase font-medium">Student ID</span>
-                        <span class="text-xs text-slate-600 font-mono" x-text="receipt?.finance?.student?.student_id || '—'"></span>
-                    </div>
-                    <div class="flex gap-2">
-                        <span class="text-[10px] text-slate-400 w-24 shrink-0 uppercase font-medium">Grade</span>
-                        <span class="text-xs text-slate-600" x-text="receipt?.finance?.grade_level || '—'"></span>
-                    </div>
-                    <div class="flex gap-2">
-                        <span class="text-[10px] text-slate-400 w-24 shrink-0 uppercase font-medium">School Year</span>
-                        <span class="text-xs text-slate-600" x-text="'SY ' + (receipt?.finance?.school_year || '—')"></span>
-                    </div>
-                </div>
-
-                {{-- Payment details --}}
-                <div class="space-y-2 border-b border-dashed border-slate-200 pb-4">
-                    <div class="flex justify-between text-xs">
-                        <span class="text-slate-500">Payment Method</span>
-                        <span class="font-semibold text-slate-700" x-text="(receipt?.payment_method||'').replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())"></span>
-                    </div>
-                    <div x-show="receipt?.online_reference" class="flex justify-between text-xs">
-                        <span class="text-slate-500">Reference No.</span>
-                        <span class="text-slate-700 font-mono" x-text="receipt?.online_reference"></span>
-                    </div>
-                    <div x-show="receipt?.notes" class="flex justify-between text-xs">
-                        <span class="text-slate-500">Notes</span>
-                        <span class="text-slate-700 text-right max-w-[60%]" x-text="receipt?.notes"></span>
-                    </div>
-                </div>
-
-                {{-- Amount --}}
-                <div class="rounded-xl bg-[#0d4c8f] px-4 py-3 flex items-center justify-between">
-                    <span class="text-sm font-semibold text-white">Amount Paid</span>
-                    <span class="text-xl font-bold text-white" x-text="'₱' + fcFmt(receipt?.amount)"></span>
-                </div>
-
-                {{-- Running balance --}}
-                <div class="flex justify-between text-xs">
-                    <span class="text-slate-400">Total Fee</span>
-                    <span class="font-semibold text-slate-600" x-text="'₱' + fcFmt(receipt?.finance?.total_fee)"></span>
-                </div>
-                <div class="flex justify-between text-xs">
-                    <span class="text-slate-400">Total Paid to Date</span>
-                    <span class="font-semibold text-green-600" x-text="'₱' + fcFmt(receipt?.finance?.amount_paid)"></span>
-                </div>
-                <div class="flex justify-between text-xs border-t border-slate-200 pt-2">
-                    <span class="text-slate-600 font-semibold">Remaining Balance</span>
-                    <span class="font-bold" :class="(receipt?.finance?.balance??0)>0?'text-red-600':'text-green-600'" x-text="'₱' + fcFmt(receipt?.finance?.balance)"></span>
-                </div>
-
-                {{-- Footer --}}
-                <div class="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-4">
-                    <p>This is an official receipt issued by MMSC.</p>
-                    <p class="mt-0.5">Thank you for your payment!</p>
-                </div>
-            </div>
         </div>
 
         {{-- ── MODE: REMINDER ────────────────────────────────── --}}
@@ -477,11 +311,6 @@
         {{-- Footer --}}
         <div x-show="!loading" class="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg/30 flex-shrink-0">
             <div class="flex items-center gap-2">
-                <template x-if="mode==='receipt'">
-                    <button @click="mode='details'" class="text-xs text-blue-600 hover:underline font-medium">
-                        ← Back to Details
-                    </button>
-                </template>
                 <template x-if="mode==='reminder'">
                     <button @click="mode='details'" class="text-xs text-blue-600 hover:underline font-medium">
                         ← Back to Details
@@ -490,8 +319,8 @@
                 <template x-if="mode==='details'">
                     <button @click="mode='pay'" x-show="(finance?.balance??0)>0"
                         class="flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors">
-                        <iconify-icon icon="solar:card-linear" width="13"></iconify-icon>
-                        Record Payment
+                        <iconify-icon icon="solar:clipboard-check-linear" width="13"></iconify-icon>
+                        Confirm Payment
                     </button>
                 </template>
             </div>
@@ -506,8 +335,8 @@
                         :class="(!payAmount||!payDate||saving)?'opacity-50 cursor-not-allowed':'hover:bg-green-700'"
                         class="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2 text-xs font-semibold text-white transition-colors shadow-sm">
                         <iconify-icon x-show="saving" icon="solar:spinner-line-duotone" width="14" class="animate-spin"></iconify-icon>
-                        <iconify-icon x-show="!saving" icon="solar:check-circle-bold" width="14"></iconify-icon>
-                        <span x-text="saving ? 'Saving...' : 'Record Payment'"></span>
+                        <iconify-icon x-show="!saving" icon="solar:clipboard-check-bold" width="14"></iconify-icon>
+                        <span x-text="saving ? 'Saving...' : 'Confirm & Record'"></span>
                     </button>
                 </template>
                 <template x-if="mode==='reminder'">
@@ -529,20 +358,12 @@
 function financeUpdateModal() {
     return {
         open: false, loading: false, saving: false,
-        mode: 'pay', // 'pay' | 'details' | 'receipt' | 'reminder'
+        mode: 'pay', // 'pay' | 'details' | 'reminder'
         studentId: null, studentLabel: '', student: null,
-        finance: null, receipt: null,
+        finance: null,
         // Pay form
         payAmount: null, payDate: '', payNotes: '',
-        payMethodGroup: 'cash',    // 'cash' | 'online'
-        onlineProvider: 'gcash',   // 'gcash' | 'paymaya' | 'paypal'
-        onlineReference: '',
         selectedMonthIds: [],
-        onlineProviders: [
-            { key: 'gcash',   label: 'GCash',   icon: 'simple-icons:gcash'   },
-            { key: 'paymaya', label: 'PayMaya', icon: 'simple-icons:maya'    },
-            { key: 'paypal',  label: 'PayPal',  icon: 'simple-icons:paypal'  },
-        ],
         today: new Date().toISOString().split('T')[0],
         // Reminder form
         reminderType: 'overdue',
@@ -557,8 +378,6 @@ function financeUpdateModal() {
         init() {
             window.openUpdateFeeModal  = (sid) => this.open_('pay', sid);
             window.openFinanceDetails  = (sid) => this.open_('details', sid);
-            window.openLatestReceipt   = (sid) => this.open_('details', sid, true);
-            window.openFinanceReceipt  = (pid) => this.openReceiptById(pid);
             window.openFinanceReminder = (sid, name) => this.openReminder(sid, name);
 
             // Auto-fill amount from selected months — registered once here, not inside open_()
@@ -573,13 +392,12 @@ function financeUpdateModal() {
             });
         },
 
-        async open_(mode, studentId, autoReceipt = false) {
-            this.mode           = mode;
-            this.studentId      = studentId;
-            this.finance        = null; this.receipt = null;
-            this.payAmount      = null; this.payDate = this.today;
-            this.payMethodGroup = 'cash'; this.onlineProvider = 'gcash';
-            this.onlineReference = ''; this.payNotes = '';
+        async open_(mode, studentId) {
+            this.mode      = mode;
+            this.studentId = studentId;
+            this.finance   = null;
+            this.payAmount = null; this.payDate = this.today;
+            this.payNotes  = '';
             this.selectedMonthIds = [];
             this.open    = true;
             this.loading = true;
@@ -591,50 +409,19 @@ function financeUpdateModal() {
                 this.finance = d.finance;
                 this.student = d.student || null;
                 if (d.student) this.studentLabel = (d.student.first_name||'') + ' ' + (d.student.last_name||'');
-                if (autoReceipt && d.finance?.payments?.length) {
-                    this.receipt = d.finance.payments[0];
-                    this.receipt.finance = { ...d.finance, student: d.student || null };
-                    this.mode = 'receipt';
-                }
             } catch(e) { /* silent */ }
             this.loading = false;
         },
 
-        async openReceiptById(paymentId) {
-            this.mode    = 'receipt';
-            this.open    = true;
-            this.loading = true;
-            this.receipt = null;
-            try {
-                const r = await fetch(`/admin/finance/receipt?payment_id=${paymentId}`);
-                const d = await r.json();
-                this.receipt = d.payment;
-                if (this.receipt?.finance?.student) {
-                    this.studentLabel = this.receipt.finance.student.first_name + ' ' + this.receipt.finance.student.last_name;
-                }
-            } catch(e) {}
-            this.loading = false;
-        },
-
-        viewReceiptFromPayment(p) {
-            this.receipt = { ...p, finance: { ...this.finance, student: this.student } };
-            this.mode = 'receipt';
-        },
-
         async submitPayment() {
             if (!this.payAmount || !this.payDate || !this.finance) return;
-            if (this.payMethodGroup === 'online' && !this.onlineReference.trim()) {
-                alert('Please enter the reference/transaction number for online payment.');
-                return;
-            }
             this.saving = true;
-            const method = this.payMethodGroup === 'cash' ? 'cash' : this.onlineProvider;
             const payload = {
                 student_finance_id: this.finance.id,
                 amount:             this.payAmount,
                 payment_date:       this.payDate,
-                payment_method:     method,
-                online_reference:   this.payMethodGroup === 'online' ? this.onlineReference.trim() : null,
+                payment_method:     'cash',
+                online_reference:   null,
                 month_ids:          this.selectedMonthIds.length ? this.selectedMonthIds : null,
                 notes:              this.payNotes || null,
             };
@@ -647,12 +434,7 @@ function financeUpdateModal() {
                 const d = await r.json();
                 if (d.success) {
                     this.finance = d.finance;
-                    // Show receipt
-                    const pmt = d.payment;
-                    pmt.finance = d.finance;
-                    this.receipt = pmt;
-                    this.mode = 'receipt';
-                    // Notify parent page
+                    this.mode = 'details';
                     if (typeof window.onFinancePaymentSaved === 'function') {
                         window.onFinancePaymentSaved(d.finance, this.studentId);
                     }
@@ -734,86 +516,11 @@ function financeUpdateModal() {
             this.saving = false;
         },
 
-        printReceipt() {
-            const r = this.receipt;
-            if (!r) return;
-            const s = r.finance?.student || {};
-            const fmt = (n) => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:0,maximumFractionDigits:2});
-            const methodLabel = (r.payment_method||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-            const balColor = (r.finance?.balance||0) > 0 ? '#dc2626' : '#16a34a';
-
-            const html = `<!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8">
-<title>Receipt ${r.receipt_number||''}</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: Arial, sans-serif; font-size: 12px; color: #1e293b; background: white; padding: 24px; max-width: 420px; margin: 0 auto; }
-  .school-name { font-size: 15px; font-weight: 800; color: #0d4c8f; text-align: center; text-transform: uppercase; letter-spacing: .05em; }
-  .sub { font-size: 10px; color: #64748b; text-align: center; margin-top: 2px; }
-  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
-  .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .label { color: #64748b; font-size: 11px; }
-  .value { font-size: 11px; font-weight: 600; color: #1e293b; }
-  .info-box { background: #f8fafc; border-radius: 8px; padding: 12px; margin: 12px 0; }
-  .info-row { display: flex; gap: 8px; margin-bottom: 4px; }
-  .info-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; width: 88px; flex-shrink: 0; }
-  .info-val { font-size: 11px; font-weight: 600; color: #1e293b; }
-  .amount-box { background: #0d4c8f; color: white; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
-  .amount-label { font-size: 12px; font-weight: 600; }
-  .amount-val { font-size: 20px; font-weight: 800; }
-  .footer { text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 16px; }
-  @media print { body { padding: 12px; } }
-</style>
-</head>
-<body>
-<p class="school-name">My Messiah School of Cavite</p>
-<p class="sub">Official Payment Receipt</p>
-<p class="sub">mmsc.edu.ph</p>
-<hr class="divider">
-<div class="row">
-  <div><p class="label" style="font-size:10px;text-transform:uppercase">Receipt No.</p><p class="value" style="font-size:13px;font-weight:800">${r.receipt_number||'—'}</p></div>
-  <div style="text-align:right"><p class="label" style="font-size:10px;text-transform:uppercase">Date</p><p class="value">${(r.payment_date||'').substr(0,10)}</p></div>
-</div>
-<div class="info-box">
-  <div class="info-row"><span class="info-label">Student</span><span class="info-val">${(s.first_name||'')+' '+(s.last_name||'')}</span></div>
-  <div class="info-row"><span class="info-label">Student ID</span><span class="info-val" style="font-family:monospace">${s.student_id||'—'}</span></div>
-  <div class="info-row"><span class="info-label">Grade</span><span class="info-val">${r.finance?.grade_level||'—'}</span></div>
-  <div class="info-row"><span class="info-label">School Year</span><span class="info-val">SY ${r.finance?.school_year||'—'}</span></div>
-</div>
-<hr class="divider" style="border-style:dashed">
-<div class="row"><span class="label">Payment Method</span><span class="value">${methodLabel}</span></div>
-${r.online_reference ? `<div class="row"><span class="label">Reference No.</span><span class="value" style="font-family:monospace">${r.online_reference}</span></div>` : ''}
-${r.notes ? `<div class="row"><span class="label">Notes</span><span class="value">${r.notes}</span></div>` : ''}
-<hr class="divider" style="border-style:dashed">
-<div class="amount-box">
-  <span class="amount-label">Amount Paid</span>
-  <span class="amount-val">₱${fmt(r.amount)}</span>
-</div>
-<div class="row" style="margin-top:8px"><span class="label">Total Fee</span><span class="value">₱${fmt(r.finance?.total_fee)}</span></div>
-<div class="row"><span class="label">Total Paid to Date</span><span class="value" style="color:#16a34a">₱${fmt(r.finance?.amount_paid)}</span></div>
-<div class="row" style="border-top:1px solid #e2e8f0;padding-top:8px;margin-top:4px">
-  <span style="font-size:12px;font-weight:700;color:#1e293b">Remaining Balance</span>
-  <span style="font-size:12px;font-weight:800;color:${balColor}">₱${fmt(r.finance?.balance)}</span>
-</div>
-<div class="footer">
-  <p>This is an official receipt issued by MMSC.</p>
-  <p style="margin-top:2px">Thank you for your payment!</p>
-</div>
-</body></html>`;
-
-            const popup = window.open('', '_blank', 'width=520,height=740,scrollbars=yes');
-            if (!popup) { alert('Pop-up blocked. Please allow pop-ups for this site to print receipts.'); return; }
-            popup.document.write(html);
-            popup.document.close();
-            popup.focus();
-            setTimeout(() => popup.print(), 400);
-        },
-
         closeModal() {
-            this.open = false;
+            this.open             = false;
             this.selectedMonthIds = [];
-            this.payAmount = null;
+            this.payAmount        = null;
+            this.payNotes         = '';
         },
         fcFmt: fcFmt,
     };

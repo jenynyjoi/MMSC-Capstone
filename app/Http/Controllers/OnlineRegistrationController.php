@@ -40,7 +40,8 @@ class OnlineRegistrationController extends Controller
             'student_status'          => 'required|in:Old,New',
             'student_category'        => 'required|in:Regular Payee,SHS Voucher Recipient,ESC Grantee',
             'is_transferee'           => 'nullable|boolean',
-            'previous_school'         => 'nullable|string|max:255',
+            'previous_school'         => in_array($request->incoming_grade_level, ['Grade 7', 'Grade 11'])
+                                         ? 'required|string|max:255' : 'nullable|string|max:255',
             'previous_school_address' => 'nullable|string',
             'subsidy_certificate_no'  => 'nullable|string|max:100',
         ];
@@ -66,6 +67,7 @@ class OnlineRegistrationController extends Controller
             'track.required'                      => 'Please select an academic track for SHS.',
             'strand.required'                     => 'Please select a strand for SHS.',
             'shs_student_type.required'           => 'Please select student type (Regular/Irregular).',
+            'previous_school.required'            => 'Previous school is required for Grade 7 and Grade 11 applicants.',
             'subsidy_prev_school_type.required'   => 'Please select your previous school type to verify eligibility.',
             'subsidy_prev_school_type.in'         => 'Invalid school type selected.',
         ]);

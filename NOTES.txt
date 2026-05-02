@@ -7,3 +7,19 @@ App pass google: rhxb jpvw jerh uwce
 Mail::raw('Test email from MMSC!', function($msg) {
     $msg->to('orquiolajennyjoy@gmail.com')->subject('Test');
 });
+
+
+
+Refresh command:
+UI
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+
+Route
+php artisan route:clear
+php artisan cache:clear
+
+DB
+php artisan migrate
+php artisan migrate:fresh --seed

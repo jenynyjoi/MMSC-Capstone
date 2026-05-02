@@ -1,19 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ── */
+body { font-family: 'Montserrat', sans-serif; }
 
-body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-/* Landing background slideshow */
-#landingPage {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: background-image 0.8s ease-in-out;
-}
-
-/* Navbar scroll effect */
+/* ── Navbar scroll effect ── */
 .navbar-scrolled {
     @apply shadow-lg backdrop-blur-md;
     background-color: rgba(255, 255, 255, 0.95) !important;
@@ -22,48 +16,254 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     background-color: rgba(15, 23, 42, 0.95) !important;
 }
 
-/* Program card hover */
-.program-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.program-card:hover {
-    transform: translateY(-6px);
-}
-
-/* Dot animation */
-.dot.active {
-    width: 24px;
-}
-
-/* Dark mode transition */
+/* ── Dark mode transition ── */
 *, *::before, *::after {
     transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-/* ═══════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   Covers welcome page + all online-registration pages.
-   Inline styles can't use Tailwind dark: variants, so we
-   override them here using .dark + attribute selectors.
-═══════════════════════════════════════════════════════ */
+/* ── Hero Carousel ── */
+#landingPage { font-family: 'Montserrat', sans-serif; }
+.hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+.hero-slide.active { opacity: 1; }
 
-/* ── Page body ── */
-.dark body { background-color: #0f172a; color: #e2e8f0; }
+.carousel-arrow {
+    position: absolute; top: 50%; z-index: 20;
+    transform: translateY(-50%);
+    width: 42px; height: 42px;
+    background: rgba(255,255,255,0.14);
+    border: 1.5px solid rgba(255,255,255,0.32);
+    border-radius: 50%; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+.carousel-arrow:hover { background: rgba(255,255,255,0.26); }
+.carousel-arrow.prev { left: 20px; }
+.carousel-arrow.next { right: 20px; }
 
-/* ── Section / div with light-gray background (#f1f5f9) ── */
-.dark section[style*="#f1f5f9"],
-.dark div[style*="#f1f5f9"] {
-    background-color: #0f172a !important;
+.dot-btn {
+    width: 10px; height: 10px; border-radius: 9999px;
+    background: rgba(255,255,255,0.40); border: none;
+    cursor: pointer; padding: 0; transition: all 0.3s;
+}
+.dot-btn.active { width: 28px; background: #55afe1; }
+
+/* ── Buttons ── */
+.btn-apply {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #55afe1; color: #fff;
+    font-family: 'Montserrat', sans-serif; font-weight: 700;
+    font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 13px 28px; border-radius: 10px; text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+}
+.btn-apply:hover { background: #3d9fd6; transform: translateY(-1px); }
+
+.btn-outline {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: #fff;
+    font-family: 'Montserrat', sans-serif; font-weight: 700;
+    font-size: 0.82rem; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 12px 28px; border: 2px solid rgba(255,255,255,0.65); border-radius: 10px;
+    text-decoration: none; transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.btn-outline:hover { background: rgba(255,255,255,0.10); border-color: #fff; transform: translateY(-1px); }
+
+/* ── Cards ── */
+.program-card { transition: transform 0.25s, box-shadow 0.25s; }
+.program-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.10); }
+
+.mv-card {
+    border-top: 4px solid #55afe1;
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem 1.75rem;
+    box-shadow: 0 2px 16px rgba(12,78,146,0.07);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+.mv-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(12,78,146,0.12); }
+
+/* ── Ticker ── */
+.ticker-wrap { overflow: hidden; }
+.ticker-inner { display: flex; gap: 3rem; white-space: nowrap; animation: ticker 30s linear infinite; }
+.ticker-inner:hover { animation-play-state: paused; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── Scroll Reveal ── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.stat-item { animation: fadeUp 0.6s ease both; }
+
+/* ── Gallery Grid ── */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
 }
 
-/* ── White card panels ── */
+/* Item 1 is featured (2×2); items 2–9 are 1×1 → 4 cols × 3 rows = 12 cells, no gaps */
+.gallery-item:nth-child(1) { grid-column: span 2; grid-row: span 2; }
+
+@media (max-width: 768px) {
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    /* On mobile, item 1 spans full width but only 1 row → 9 items fill 5 clean rows */
+    .gallery-item:nth-child(1) { grid-column: span 2; grid-row: span 1; }
+}
+
+.gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    cursor: pointer;
+    background: #0c2340;
+    aspect-ratio: 4/3;
+}
+
+.gallery-item:nth-child(1) { aspect-ratio: unset; }
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease, filter 0.4s ease;
+    display: block;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.07);
+    filter: brightness(0.75);
+}
+
+.gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(4,22,41,0.80) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    display: flex;
+    align-items: flex-end;
+    padding: 1rem 1.1rem;
+}
+
+.gallery-item:hover .gallery-overlay { opacity: 1; }
+
+.gallery-overlay p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ── Lightbox ── */
+#galleryLightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(4,22,41,0.93);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(6px);
+}
+
+#galleryLightbox.open { display: flex; }
+
+#galleryLightbox img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 12px;
+    object-fit: contain;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+#lbClose {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.4rem;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#lbClose:hover { background: rgba(255,255,255,0.22); }
+
+#lbCaption {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.80);
+    background: rgba(4,22,41,0.6);
+    padding: 6px 18px;
+    border-radius: 999px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+}
+
+#lbPrev, #lbNext {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+#lbPrev { left: 1rem; }
+#lbNext { right: 1rem; }
+#lbPrev:hover, #lbNext:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Gallery Filter Buttons ── */
+.filter-btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 18px;
+    border-radius: 999px;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: #475569;
+}
+.filter-btn:hover { border-color: #55afe1; color: #55afe1; }
+.filter-btn.active { background: #55afe1; color: #fff; border-color: #55afe1; }
+
+/* ═══════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+═══════════════════════════════════════════════════════ */
+
+.dark body { background-color: #0f172a; color: #e2e8f0; }
+
+.dark section[style*="#f1f5f9"],
+.dark div[style*="#f1f5f9"] { background-color: #0f172a !important; }
+
 .dark div[style*="background:#fff"],
 .dark div[style*="background: #fff"] {
     background-color: #1e293b !important;
     border-color: #334155 !important;
 }
 
-/* ── Financial-assistance program cards (bg-white Tailwind) ── */
 .dark .program-card.bg-white {
     background-color: #1e293b !important;
     border-color: #334155 !important;
@@ -71,39 +271,33 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 .dark .program-card.bg-white [style*="color:#475569"],
 .dark .program-card.bg-white [style*="color:#0c2340"] { color: inherit !important; }
 
-/* ── Why-Choose mv-card (defined in welcome.blade.php <style>) ── */
 .dark .mv-card {
     background: #1e293b;
     border-top-color: #55afe1;
     box-shadow: 0 2px 16px rgba(0,0,0,0.4);
 }
 
-/* ── Inline text colours ── */
 .dark [style*="color:#0c2340"] { color: #f1f5f9 !important; }
 .dark [style*="color:#475569"] { color: #94a3b8 !important; }
 .dark [style*="color:#64748b"] { color: #94a3b8 !important; }
 .dark [style*="color:#374151"] { color: #e2e8f0 !important; }
 .dark [style*="color:#94a3b8"] { color: #64748b !important; }
 
-/* ── Small badge/pill colours ── */
 .dark [style*="background:#dbeafe"] { background-color: #1e3a5f !important; }
 .dark [style*="background:#f3e8ff"] { background-color: #2e1065 !important; }
 .dark [style*="background:#dcfce7"] { background-color: #052e16 !important; }
 .dark [style*="background:#fef3c7"] { background-color: #451a03 !important; }
 .dark [style*="background:#e8f4fd"] { background-color: #1e3a5f !important; }
 
-/* ── Registration: SHS info box ── */
 .dark [style*="background:#f0f7ff"] {
     background-color: #1e3a5f !important;
     border-color: #3b82f6 !important;
 }
-/* ── Registration: transferee / inset box ── */
 .dark [style*="background:#f8fafc"] {
     background-color: #1e293b !important;
     border-color: #334155 !important;
 }
 
-/* ── Registration: .field-input CSS class ── */
 .dark .field-input {
     background-color: #1e293b !important;
     border-color: #475569 !important;
@@ -112,7 +306,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 .dark .field-input:focus   { border-color: #55afe1 !important; }
 .dark .field-input::placeholder { color: #64748b !important; }
 
-/* ── Registration: inline-styled inputs / selects (step 1) ── */
 .dark input[style*="background:#fff"],
 .dark select[style*="background:#fff"],
 .dark textarea[style*="background:#fff"] {
@@ -121,23 +314,18 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
     color: #f1f5f9 !important;
 }
 
-/* ── Registration: error box inline bg ── */
 .dark [style*="background:#fef2f2"] {
     background-color: #450a0a !important;
     border-color: #b91c1c !important;
 }
 .dark [style*="background:#fef2f2"] li { color: #fca5a5 !important; }
 
-/* ── Review page: section header blocks ── */
-.dark [style*="background:#0d4c8f; padding:1"] {
-    background-color: #0d4c8f !important;
-}
+.dark [style*="background:#0d4c8f; padding:1"] { background-color: #0d4c8f !important; }
 .dark [style*="background:#f8fafc; border-radius"] {
     background-color: #1e293b !important;
     border-color: #334155 !important;
 }
 
-/* ── Confirmation page: success box ── */
 .dark [style*="background:#f0fdf4"] {
     background-color: #052e16 !important;
     border-color: #166534 !important;

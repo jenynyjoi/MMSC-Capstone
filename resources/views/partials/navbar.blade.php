@@ -4,12 +4,18 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
 
-            <a href="{{ url('/') }}" class="flex items-center gap-3 group">
-                <img src="{{ asset('images/messiah-logo.png') }}" alt="MMSC Logo" class="rounded-lg w-10 h-10 object-cover group-hover:scale-105 transition-transform duration-300">
-                <span class="hidden sm:block font-medium text-sm leading-tight uppercase" style="font-weight: 700; color: #0d4c8f; letter-spacing: 0.04em; font-family: sans-serif;">
+                        <a href="{{ url('/') }}" class="flex items-center gap-3 group">
+                <img src="{{ asset('images/messiah-logo.png') }}" 
+                    alt="MMSC Logo" 
+                    class="rounded-lg w-10 h-10 object-cover group-hover:scale-105 transition-transform duration-300 
+                            dark:border dark:border-slate-600">
+                <span class="hidden sm:block font-medium text-sm leading-tight uppercase 
+                            text-[#0d4c8f] dark:text-slate-300" 
+                    style="font-weight: 700; letter-spacing: 0.04em; font-family: sans-serif;">
                     My Messiah School of Cavite
                 </span>
             </a>
+
 
             <ul class="hidden lg:flex items-center gap-1">
                 <li>

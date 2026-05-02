@@ -39,48 +39,50 @@ class StudentPropertyRecord extends Model
     }
 
     /**
-     * Create a blank property record for a student (if one doesn't already exist).
-     * Called when a student is approved/enrolled.
+     * Create a property record for a student on enrollment.
+     * All default items are pre-assigned (issued = true).
      */
     public static function ensureForStudent(int $studentId, string $schoolYear): self
     {
         $record = self::firstOrCreate(
             ['student_id' => $studentId, 'school_year' => $schoolYear],
-            ['status' => 'for_issuance']
+            ['status' => 'pending']
         );
 
         if ($record->wasRecentlyCreated) {
             foreach (self::defaultItems() as $itemName) {
-                $record->items()->create(['item_name' => $itemName]);
+                $record->items()->create([
+                    'item_name' => $itemName,
+                    'issued'    => true,
+                    'returned'  => false, // repurposed: true = lost
+                    'damaged'   => false,
+                ]);
             }
         }
 
         return $record;
     }
 
-    /** Recompute status from items and save */
+    /**
+     * Recompute status from item conditions.
+     * lost (returned=true) or damaged on any item → overdue.
+     * Otherwise stays pending until admin manually marks cleared.
+     */
     public function recomputeStatus(): void
     {
         $items = $this->items;
-        $issued = $items->where('issued', true);
 
-        if ($issued->isEmpty()) {
-            $this->status = 'for_issuance';
-        } elseif ($issued->where('returned', false)->isEmpty()) {
-            $this->status = 'cleared';
+        if ($items->where('returned', true)->isNotEmpty() || $items->where('damaged', true)->isNotEmpty()) {
+            $this->status = 'overdue';
+        } elseif ($this->status === 'cleared') {
+            // Keep cleared if admin already approved
         } else {
-            $this->status = 'issued';
+            $this->status = 'pending';
         }
 
         $this->save();
 
-        // Keep students.property_clearance in sync
-        $map = [
-            'for_issuance' => 'pending',
-            'issued'       => 'pending',
-            'cleared'      => 'cleared',
-            'overdue'      => 'overdue',
-        ];
+        $map = ['pending' => 'pending', 'cleared' => 'cleared', 'overdue' => 'overdue'];
         Student::where('id', $this->student_id)
             ->update(['property_clearance' => $map[$this->status] ?? 'pending']);
     }

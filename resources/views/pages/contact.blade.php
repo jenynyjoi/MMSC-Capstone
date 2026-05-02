@@ -29,8 +29,8 @@
                 </div>
 
                 @foreach([
-                    ['ri-map-pin-2-line','Address','Tanza, Cavite, Philippines','#0d4c8f'],
-                    ['ri-phone-line','Phone / Mobile','+63 (XXX) XXX-XXXX','#059669'],
+                    ['ri-map-pin-2-line','Address','TNHA Compound, Brgy. Poblacion 1, General Mariano Alvarez, Philippines, 4117','#0d4c8f'],
+                    ['ri-phone-line','Phone / Mobile','+63 0946 226 9257','#059669'],
                     ['ri-mail-line','Email','info@mmsc.edu.ph','#7c3aed'],
                     ['ri-time-line','Office Hours','Mon–Fri · 7:30 AM – 5:00 PM','#ea580c'],
                 ] as [$icon,$label,$value,$color])
@@ -46,7 +46,7 @@
                 @endforeach
 
                 {{-- Offices --}}
-                <div style="background:#fff; border-radius:12px; padding:1.25rem; border:1px solid #e2e8f0; box-shadow:0 1px 6px rgba(0,0,0,0.04);">
+                <!-- <div style="background:#fff; border-radius:12px; padding:1.25rem; border:1px solid #e2e8f0; box-shadow:0 1px 6px rgba(0,0,0,0.04);">
                     <p style="font-weight:800; font-size:0.85rem; color:#0c2340; margin:0 0 0.75rem;">Specific Offices</p>
                     <div class="space-y-2">
                         @foreach(['Registrar\'s Office','Finance / Accounting Office','Principal\'s Office','Guidance Office'] as $office)
@@ -56,7 +56,7 @@
                         </div>
                         @endforeach
                     </div>
-                </div>
+                </div> -->
             </div>
 
             {{-- Inquiry Form --}}

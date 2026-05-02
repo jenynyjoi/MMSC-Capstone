@@ -185,3 +185,73 @@ Key `.env` values to configure:
 - Active sub-item: `border-l-2 border-[#0d4c8f] text-[#0d4c8f]`, no background.
 - Container line: `ml-8 pl-3 border-l-2 border-slate-200`.
 - Sub-item offset: `-ml-[13px] pl-[11px]` so the per-item border overlaps the container line.
+
+---
+
+## Session Notes (April–May 2026)
+
+### Admission Approval Pipeline
+
+- **Portal accounts created on approval** (not deferred to enrollment). `approveAndTransfer()` in `AdmissionReviewController` now runs all 5 steps:
+  1. Create `Student` record via `Student::createFromApplication()`
+  2. Link finance config
+  3. Create `StudentEnrollment` (queues student for section assignment)
+  4. Create student `User` account (role: `student`) — email = school email, password = reference number
+  5. Create parent/guardian `User` account (role: `parent`) — email = `guardian_email`
+- Both portal creations are **idempotent**: guarded by `portal_account_created` flag and `User::where('email')->exists()`.
+- `EnrollController::createPortalAccountsIfNeeded()` remains as a safe no-op backstop.
+- Approval emails use different copy than enrollment emails ("application approved" vs "officially enrolled").
+
+### Class Schedule Grid — Key Fixes & Rules
+
+#### Grid Slot Boundary Matching
+- `SubjectSchedule.time_start` is stored as `HH:MM:SS` (MySQL TIME). `generateSlots()` produces `HH:MM` slot starts.
+- After a break period, slot boundaries shift (e.g. break `10:00–10:30` → next slot starts at `10:30`). A schedule stored at `12:00` falls inside slot `11:30–12:30`, not at a slot start.
+- **Fix**: `gridData()` uses range matching — `substr(time_start,0,5) >= slot.start && < slot.end` — instead of exact equality.
+
+#### Teacher-less Subject Blocking
+- Subjects with no `teacher_id` in `subject_allocation` **cannot** be scheduled (manual or auto-assign).
+- Blocked at three layers: UI (amber warning + excluded from dropdown), AJAX modal (`availableAllocations` getter filters them), server-side (422 guard in `storeSchedule()` and `autoAssign()`).
+
+#### Auto-Assign Algorithm (Day-Centric Fill)
+- **Strategy**: day → slot → allocation (not allocation → day → slot).
+- For each day, sorts allocations by remaining-need descending, then fills each slot with the highest-priority subject that has no conflict and hasn't appeared on that day yet.
+- Result: days fill from start-to-end with no gaps between placed subjects.
+- `$remaining[$alloc->id]` tracks meetings still to place; collected outside the DB transaction for the skipped report.
+- Teacher-less allocations are pre-rejected into `$skipped` before the transaction.
+
+#### Conflict Detection (`detectConflicts()`)
+Checks in order:
+1. Section overlap (error)
+2. Teacher overlap — message now names the conflicting subject + section + exact time + all busy times on that day (error)
+3. Room overlap (warning)
+4. Time window / break overlap (warning)
+5. Meetings-per-week limit (error)
+6. **Same subject same day** (error) — suggests available days
+7. Duration mismatch (warning)
+
+#### Client-Side Same-Day Warning
+- `sameDayWarning` Alpine computed getter scans the live grid to detect if the selected allocation already appears on the selected day — no server round-trip.
+- Shows inline red banner under the day buttons with available-day suggestions.
+- Server-side check still blocks the save as final guard.
+
+### Teacher Name Format
+- Teacher names follow the same format as students: `LASTNAME, FIRSTNAME M.I.` (all caps).
+- `TeacherProfile` model has `boot()` that auto-uppercases `first_name`, `last_name`, `middle_name` on save (mirrors `Student` model).
+- `TeacherProfile::getFormattedNameAttribute()` computes the display name from stored fields — all existing teachers show the correct format without a DB migration.
+- `TeacherController::store()` and `update()` both build `$fullName` in the formatted pattern and store it to `User.name`.
+- `show()` API endpoint returns `formatted_name` (not `User.name`) so the JS detail/edit panels are always correct.
+- Teachers page list uses `$tp->formatted_name` (not `$tp->user->name`).
+
+### Subject Management — Subject Specializations in Teacher Modal
+- The "Subject Specializations" checkboxes in the Add/Edit Teacher modal are **dynamically populated** from the `subjects` table (`is_active = true`, ordered by name).
+- `TeacherController::index()` queries `Subject::where('is_active', true)->orderBy('subject_name')->pluck('subject_name')` and passes it as `$subjectSpecializations`.
+- The filter dropdown on the teacher list page also uses `$subjectSpecializations` (both were previously hardcoded arrays).
+- Empty-state message shown if no subjects exist yet.
+
+### Subject View Details Modal
+- "View Details" button added as the first option in each subject row's action dropdown (solar:eye-bold indigo icon).
+- Opens `#subject-detail-modal` — a read-only panel showing: subject code/name, active/inactive badge, description, classification grid (department, type, grade, program), SHS track/strand (hidden if not SHS), schedule config stat cards (hrs/meeting · meetings/wk · hrs/wk), semester info.
+- `viewSubjectDetails(id)` JS function fetches from the existing `showSubject` AJAX endpoint.
+- "Edit Subject" button in the modal footer closes the detail and opens the edit form.
+- Description and SHS/semester sections are conditionally hidden when empty/not applicable.

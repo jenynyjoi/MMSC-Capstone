@@ -50,7 +50,7 @@ class StudentFinance extends Model
         ],
         // JHS Regular payee
         'jhs_regular' => [
-            'A' => [16000, 0,    0],
+            'A' => [16500, 0,    0],
             'B' => [7500,  1000, 9],
             'C' => [6600,  1100, 9],
             'D' => [5700,  1200, 9],
@@ -58,16 +58,18 @@ class StudentFinance extends Model
         // JHS ESC grantee
         'jhs_esc' => [
             'A' => [7500, 0,   0],
-            'B' => [3500, 500, 9],
+            'B' => [3000, 500, 9],
         ],
-        // SHS — 3 options (modes of payment, not installment plans)
-        // A = No voucher (regular payee)
-        // B = With SHS voucher from ESC subsidiary (80% discount — student pays ₱1,400)
-        // C = With SHS voucher from public school completer (100% covered — student pays ₱0 tuition, only misc)
+        // SHS — 4 options (all one-time payments, no installment for SHS)
+        // A = Regular payee — no subsidy                              → ₱17,500
+        // B = MMSC JHS Completer with ESC applied ("Old" student)     → ₱3,500
+        // C = ESC completer from private JHS (non-MMSC)              → ₱3,500
+        // D = Public JHS Graduate — fully subsidized (tuition free)  → ₱0 (only misc; no referral)
         'shs' => [
             'A' => [17500, 0, 0],
-            'B' => [1400,  0, 0],
-            'C' => [0,     0, 0], // tuition free; only misc recorded; no referral
+            'B' => [3500,  0, 0],
+            'C' => [3500,  0, 0],
+            'D' => [0,     0, 0],
         ],
     ];
 
