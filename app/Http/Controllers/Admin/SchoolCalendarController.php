@@ -16,7 +16,8 @@ class SchoolCalendarController extends Controller
     // ── Index ────────────────────────────────────────────────
     public function index(Request $request)
     {
-        $schoolYear = $request->get('school_year', '2025-2026');
+        $default    = \App\Models\SchoolYear::where('status', 'active')->value('name') ?? '2025-2026';
+        $schoolYear = $request->get('school_year', $default);
         $month      = (int) $request->get('month', now()->month);
         $year       = (int) $request->get('year',  now()->year);
 
@@ -28,6 +29,7 @@ class SchoolCalendarController extends Controller
                     'id'          => $e->id,
                     'day_type'    => $e->day_type,
                     'event_title' => $e->event_title,
+                    'description' => $e->description,
                     'badge_class' => $e->badgeClass(),
                     'label'       => $e->event_title ?: $e->dayTypeLabel(),
                 ]
@@ -81,6 +83,7 @@ class SchoolCalendarController extends Controller
                 'date'        => $event->date->format('Y-m-d'),
                 'day_type'    => $event->day_type,
                 'event_title' => $event->event_title,
+                'description' => $event->description,
                 'badge_class' => $event->badgeClass(),
                 'label'       => $event->event_title ?: $event->dayTypeLabel(),
             ],
@@ -95,6 +98,7 @@ class SchoolCalendarController extends Controller
         $data = $request->validate([
             'day_type'        => 'required|in:regular,holiday,suspended,early_dismissal,exam_day,school_event,break',
             'event_title'     => 'nullable|string|max:255',
+            'description'     => 'nullable|string',
             'attendance_rule' => 'required|in:normal,no_attendance_holiday,no_attendance_suspension,morning_only,afternoon_only,exam_present',
         ]);
 
@@ -108,6 +112,7 @@ class SchoolCalendarController extends Controller
                 'date'        => $event->date->format('Y-m-d'),
                 'day_type'    => $event->day_type,
                 'event_title' => $event->event_title,
+                'description' => $event->description,
                 'badge_class' => $event->badgeClass(),
                 'label'       => $event->event_title ?: $event->dayTypeLabel(),
             ],
@@ -142,23 +147,56 @@ class SchoolCalendarController extends Controller
     // ── Download PDF ────────────────────────────────────────
     public function downloadPdf(Request $request)
     {
-        $schoolYear = $request->get('school_year', '2025-2026');
-        $month      = (int) $request->get('month', now()->month);
-        $year       = (int) $request->get('year',  now()->year);
+        $default    = \App\Models\SchoolYear::where('status', 'active')->value('name') ?? '2025-2026';
+        $schoolYear = $request->get('school_year', $default);
+
+        // Parse school year (e.g. "2025-2026" → y1=2025, y2=2026)
+        [$y1, $y2] = array_map('intval', explode('-', $schoolYear));
+
+        // Philippine school year: July y1 → June y2 (12 months)
+        $defaultMonths = [];
+        for ($m = 7; $m <= 12; $m++) {
+            $defaultMonths[] = ['year' => $y1, 'month' => $m];
+        }
+        for ($m = 1; $m <= 6; $m++) {
+            $defaultMonths[] = ['year' => $y2, 'month' => $m];
+        }
 
         $events = SchoolCalendarEvent::forYear($schoolYear)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
             ->orderBy('date')
             ->get();
 
-        $monthLabel = Carbon::createFromDate($year, $month, 1)->format('F Y');
+        $allEvents = [];
+        $eventMonthLookup = [];
+
+        $events->each(function ($e) use (&$allEvents, &$eventMonthLookup) {
+            $key = $e->date->format('Y-n');
+            $allEvents[$key][] = $e;
+            $eventMonthLookup[sprintf('%04d-%02d', $e->date->year, $e->date->month)] = [
+                'year'  => $e->date->year,
+                'month' => $e->date->month,
+            ];
+        });
+
+        $monthLookup = [];
+        foreach ($defaultMonths as $monthData) {
+            $monthLookup[sprintf('%04d-%02d', $monthData['year'], $monthData['month'])] = $monthData;
+        }
+        foreach ($eventMonthLookup as $monthKey => $monthData) {
+            $monthLookup[$monthKey] = $monthData;
+        }
+
+        $months = array_values($monthLookup);
+        usort($months, fn($a, $b) => strcmp(
+            sprintf('%04d-%02d', $a['year'], $a['month']),
+            sprintf('%04d-%02d', $b['year'], $b['month'])
+        ));
 
         $pdf = Pdf::loadView(
             'admin.school-calendar-pdf',
-            compact('events', 'schoolYear', 'monthLabel', 'month', 'year')
-        )->setPaper('a4', 'landscape');
+            compact('allEvents', 'schoolYear', 'months')
+        )->setPaper('a4', 'portrait');
 
-        return $pdf->download("school-calendar-{$year}-{$month}.pdf");
+        return $pdf->download("school-calendar-{$schoolYear}.pdf");
     }
 }

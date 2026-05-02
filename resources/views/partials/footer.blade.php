@@ -7,7 +7,7 @@
                 <!-- Logo -->
                 <div class="lg:col-span-1 flex flex-col items-start gap-3">
                     <a href="{{ url('/') }}">
-                        <img src="{{ asset('public/images/messiah-logo.png') }}" alt="My Messiah School Logo" class="w-20 h-20 object-contain">
+                        <img src="{{ asset('images/messiah-logo.png') }}" alt="My Messiah School Logo" class="w-20 h-20 object-contain">
                     </a>
                 </div>
 

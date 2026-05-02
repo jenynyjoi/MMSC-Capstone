@@ -10,7 +10,7 @@
 
     @include('partials.navbar')
 
-    <!-- @include('partials.header') -->
+    @include('partials.header')
 
     <main class="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         @yield('content')       {{-- ← your page content goes here --}}

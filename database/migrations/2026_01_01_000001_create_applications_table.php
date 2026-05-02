@@ -21,6 +21,12 @@ return new class extends Migration
             $table->string('previous_school', 255)->nullable();
             $table->text('previous_school_address')->nullable();
 
+            // ── SHS-SPECIFIC ──
+            $table->string('track', 100)->nullable()->comment('Academic, TVL, Arts & Design, Sports');
+            $table->string('strand', 100)->nullable()->comment('STEM, ABM, HUMSS, HE, ICT, etc.');
+            $table->string('pathway', 100)->nullable();
+            $table->string('shs_student_type', 20)->nullable()->comment('Regular | Irregular');
+
             // ── STEP 2: PERSONAL INFO ──
             $table->string('first_name', 100);
             $table->string('middle_name', 100)->nullable();
@@ -50,7 +56,6 @@ return new class extends Migration
             $table->text('guardian_address')->nullable();
             $table->string('guardian_occupation', 100)->nullable();
             $table->string('guardian_email', 255)->nullable();
-            $table->string('emergency_contact_number', 20)->nullable();
 
             // ── STEP 4: DOCUMENTS ──
             $table->boolean('psa_uploaded')->default(false);
@@ -63,15 +68,8 @@ return new class extends Migration
             $table->string('good_moral_filename', 255)->nullable();
             $table->string('good_moral_path', 500)->nullable();
 
-            // ── SHS ACADEMIC ──
-            $table->string('track', 100)->nullable();
-            $table->string('strand', 100)->nullable();
-            $table->string('pathway', 100)->nullable();
-
-            // ── SCHOOL YEAR ──
+            // ── META ──
             $table->string('school_year', 20)->default('2026-2027');
-
-            // ── STATUS ──
             $table->enum('application_status', ['pending', 'pre_approved', 'approved', 'rejected', 'incomplete'])->default('pending');
 
             // ── CONSENT ──

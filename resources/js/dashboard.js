@@ -31,7 +31,11 @@ window.toggleSidebarCollapse = function() {
     
     isIconOnly = !isIconOnly;
     sidebar.classList.toggle('sidebar-icon-only');
-    
+
+    if (isIconOnly) {
+        window.dispatchEvent(new CustomEvent('sidebar-collapsed'));
+    }
+
     const btnIcon = document.getElementById('collapse-icon');
     if (btnIcon) {
         btnIcon.setAttribute('icon', isIconOnly ? 'solar:hamburger-menu-linear' : 'rivet-icons:menu');
@@ -178,12 +182,13 @@ function initCharts() {
 
     const statusCtx = document.getElementById('studentStatusChart');
     if (statusCtx) {
+        const sd = window.mmscStatusData || {};
         statusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Active', 'Graduated', 'Completed', 'Inactive', 'Withdrawn'],
                 datasets: [{
-                    data: [35, 25, 20, 10, 10],
+                    data: [sd.active||0, sd.graduated||0, sd.completed||0, sd.inactive||0, sd.withdrawn||0],
                     backgroundColor: ['#3b82f6', '#facc15', '#22c55e', '#94a3b8', '#ef4444'],
                     borderWidth: 2,
                     borderColor: '#ffffff',

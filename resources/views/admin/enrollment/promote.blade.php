@@ -6,21 +6,12 @@
 <div class="flex-1 overflow-y-auto lg:p-8 dark:bg-dark-bg bg-slate-50/50 p-4">
 
     {{-- ── Page Header ── --}}
-    <div class="mb-6 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between flex-wrap">
-        <div>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Enrollment</h1>
-            <p class="mt-0.5 text-sm text-slate-400 dark:text-slate-500">Section Assignment and Student Promotion</p>
-        </div>
-        <div class="flex items-center gap-2 mt-2 sm:mt-0">
-            <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Current school year:</span>
-            <div class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-3 py-1.5 shadow-sm">
-                <span class="text-sm font-semibold text-slate-700 dark:text-white">SY 2025–2026</span>
-                <button class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <iconify-icon icon="solar:menu-dots-bold" width="14"></iconify-icon>
-                </button>
-            </div>
-        </div>
-    </div>
+    <x-admin.page-header
+        title="Enrollment"
+        subtitle="Section Assignment and Student Promotion"
+        school-year="{{ $activeSchoolYear }}"
+        :show-menu="true"
+    />
 
     {{-- ── Main Card ── --}}
     <div class="rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card shadow-sm overflow-hidden">

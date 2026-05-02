@@ -1,0 +1,9 @@
+
+laravel/breeze - Laravel's authentication features, including login, registration, password reset, email verification, and password confirmation.
+
+App pass google: rhxb jpvw jerh uwce
+
+//chek gmail
+Mail::raw('Test email from MMSC!', function($msg) {
+    $msg->to('orquiolajennyjoy@gmail.com')->subject('Test');
+});

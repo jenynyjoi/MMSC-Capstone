@@ -15,7 +15,10 @@ class Application extends Model
         'reference_number',
         // Step 1
         'applied_level', 'incoming_grade_level', 'student_status',
-        'student_category', 'is_transferee', 'previous_school', 'previous_school_address',
+        'student_category', 'subsidy_prev_school_type', 'subsidy_certificate_no',
+        'is_transferee', 'previous_school', 'previous_school_address',
+        // SHS
+        'track', 'strand', 'pathway', 'shs_student_type',
         // Step 2
         'first_name', 'middle_name', 'last_name', 'suffix',
         'gender', 'date_of_birth', 'lrn', 'nationality', 'mother_tongue', 'religion',
@@ -25,45 +28,79 @@ class Application extends Model
         'mother_name', 'mother_maiden_name', 'mother_contact',
         'guardian_name', 'guardian_relationship', 'guardian_contact',
         'guardian_address', 'guardian_occupation', 'guardian_email',
-        'emergency_contact_number',
         // Step 4
-        'psa_uploaded', 'psa_filename', 'psa_path',
-        'report_card_uploaded', 'report_card_filename', 'report_card_path',
-        'good_moral_uploaded', 'good_moral_filename', 'good_moral_path',
-        // Academic
-        'track', 'strand', 'pathway',
+        'psa_uploaded', 'psa_filename', 'psa_path', 'psa_status', 'psa_submitted',
+        'report_card_uploaded', 'report_card_filename', 'report_card_path', 'report_card_status', 'report_card_submitted',
+        'good_moral_uploaded', 'good_moral_filename', 'good_moral_path', 'good_moral_status', 'good_moral_submitted',
+        'medical_uploaded', 'medical_filename', 'medical_path', 'medical_status', 'medical_submitted',
         // Meta
         'school_year', 'application_status',
         'consent_given', 'consent_date', 'parent_name_consent',
         'submitted_at',
+        // Finance clearance gate
+        'finance_clearance', 'finance_clearance_notes', 'finance_clearance_updated_at',
+        'finance_total_assessment', 'finance_amount_paid', 'finance_next_due_date', 'finance_cleared_by',
     ];
 
     protected $casts = [
-        'is_transferee'         => 'boolean',
-        'psa_uploaded'          => 'boolean',
-        'report_card_uploaded'  => 'boolean',
-        'good_moral_uploaded'   => 'boolean',
-        'consent_given'         => 'boolean',
-        'date_of_birth'         => 'date',
-        'submitted_at'          => 'datetime',
-        'consent_date'          => 'datetime',
+        'is_transferee'        => 'boolean',
+        'psa_uploaded'         => 'boolean',
+        'report_card_uploaded' => 'boolean',
+        'good_moral_uploaded'  => 'boolean',
+        'consent_given'        => 'boolean',
+        'date_of_birth'                  => 'date',
+        'submitted_at'                   => 'datetime',
+        'consent_date'                   => 'datetime',
+        'finance_clearance_updated_at'   => 'datetime',
+        'finance_next_due_date'          => 'date',
+        'finance_total_assessment'       => 'decimal:2',
+        'finance_amount_paid'            => 'decimal:2',
     ];
+
+    protected static $nameFields = [
+        'first_name', 'middle_name', 'last_name', 'suffix',
+        'father_name', 'mother_name', 'mother_maiden_name', 'guardian_name',
+    ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+        static::saving(function (self $model) {
+            foreach (self::$nameFields as $field) {
+                if (!empty($model->$field)) {
+                    $model->$field = strtoupper($model->$field);
+                }
+            }
+        });
+    }
 
     // ── Generate unique reference number ──
     public static function generateReferenceNumber(): string
     {
-        $year = date('Y');
-        $count = self::whereYear('created_at', $year)->count() + 1;
-        return 'APP-' . $year . '-' . str_pad($count, 6, '0', STR_PAD_LEFT);
+        $year   = date('Y');
+        $prefix = 'APP-' . $year . '-';
+
+        // Use the highest existing sequence for this year, not COUNT (COUNT breaks on gaps/deletions).
+        $last = self::where('reference_number', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(reference_number, \'-\', -1) AS UNSIGNED) DESC')
+            ->value('reference_number');
+
+        $seq = $last ? ((int) substr($last, strlen($prefix)) + 1) : 1;
+
+        return $prefix . str_pad($seq, 6, '0', STR_PAD_LEFT);
     }
 
-    // ── Full name accessor ──
+    // ── Accessors ──
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . $this->last_name . ($this->suffix ? ' ' . $this->suffix : ''));
+        return trim(
+            $this->first_name . ' ' .
+            ($this->middle_name ? $this->middle_name . ' ' : '') .
+            $this->last_name .
+            ($this->suffix ? ' ' . $this->suffix : '')
+        );
     }
 
-    // ── Status label ──
     public function getStatusLabelAttribute(): string
     {
         return match ($this->application_status) {
@@ -76,7 +113,6 @@ class Application extends Model
         };
     }
 
-    // ── Status color ──
     public function getStatusColorAttribute(): string
     {
         return match ($this->application_status) {
@@ -87,5 +123,12 @@ class Application extends Model
             'incomplete'   => 'bg-orange-100 text-orange-700',
             default        => 'bg-slate-100 text-slate-600',
         };
+    }
+
+    // ── Application type label ──
+    public function getApplicationTypeAttribute(): string
+    {
+        if ($this->is_transferee) return 'Transfer';
+        return $this->student_status === 'Old' ? 'Return' : 'New';
     }
 }

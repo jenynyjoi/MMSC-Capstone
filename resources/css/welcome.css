@@ -39,3 +39,111 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 *, *::before, *::after {
     transition: background-color 0.3s ease, color 0.2s ease, border-color 0.2s ease;
 }
+
+/* ═══════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Covers welcome page + all online-registration pages.
+   Inline styles can't use Tailwind dark: variants, so we
+   override them here using .dark + attribute selectors.
+═══════════════════════════════════════════════════════ */
+
+/* ── Page body ── */
+.dark body { background-color: #0f172a; color: #e2e8f0; }
+
+/* ── Section / div with light-gray background (#f1f5f9) ── */
+.dark section[style*="#f1f5f9"],
+.dark div[style*="#f1f5f9"] {
+    background-color: #0f172a !important;
+}
+
+/* ── White card panels ── */
+.dark div[style*="background:#fff"],
+.dark div[style*="background: #fff"] {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ── Financial-assistance program cards (bg-white Tailwind) ── */
+.dark .program-card.bg-white {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+.dark .program-card.bg-white [style*="color:#475569"],
+.dark .program-card.bg-white [style*="color:#0c2340"] { color: inherit !important; }
+
+/* ── Why-Choose mv-card (defined in welcome.blade.php <style>) ── */
+.dark .mv-card {
+    background: #1e293b;
+    border-top-color: #55afe1;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+}
+
+/* ── Inline text colours ── */
+.dark [style*="color:#0c2340"] { color: #f1f5f9 !important; }
+.dark [style*="color:#475569"] { color: #94a3b8 !important; }
+.dark [style*="color:#64748b"] { color: #94a3b8 !important; }
+.dark [style*="color:#374151"] { color: #e2e8f0 !important; }
+.dark [style*="color:#94a3b8"] { color: #64748b !important; }
+
+/* ── Small badge/pill colours ── */
+.dark [style*="background:#dbeafe"] { background-color: #1e3a5f !important; }
+.dark [style*="background:#f3e8ff"] { background-color: #2e1065 !important; }
+.dark [style*="background:#dcfce7"] { background-color: #052e16 !important; }
+.dark [style*="background:#fef3c7"] { background-color: #451a03 !important; }
+.dark [style*="background:#e8f4fd"] { background-color: #1e3a5f !important; }
+
+/* ── Registration: SHS info box ── */
+.dark [style*="background:#f0f7ff"] {
+    background-color: #1e3a5f !important;
+    border-color: #3b82f6 !important;
+}
+/* ── Registration: transferee / inset box ── */
+.dark [style*="background:#f8fafc"] {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ── Registration: .field-input CSS class ── */
+.dark .field-input {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+.dark .field-input:focus   { border-color: #55afe1 !important; }
+.dark .field-input::placeholder { color: #64748b !important; }
+
+/* ── Registration: inline-styled inputs / selects (step 1) ── */
+.dark input[style*="background:#fff"],
+.dark select[style*="background:#fff"],
+.dark textarea[style*="background:#fff"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+/* ── Registration: error box inline bg ── */
+.dark [style*="background:#fef2f2"] {
+    background-color: #450a0a !important;
+    border-color: #b91c1c !important;
+}
+.dark [style*="background:#fef2f2"] li { color: #fca5a5 !important; }
+
+/* ── Review page: section header blocks ── */
+.dark [style*="background:#0d4c8f; padding:1"] {
+    background-color: #0d4c8f !important;
+}
+.dark [style*="background:#f8fafc; border-radius"] {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ── Confirmation page: success box ── */
+.dark [style*="background:#f0fdf4"] {
+    background-color: #052e16 !important;
+    border-color: #166534 !important;
+}
+.dark [style*="background:#f0fdf4"] [style*="color:#15803d"] { color: #86efac !important; }
+.dark [style*="background:#eff6ff"] {
+    background-color: #1e3a5f !important;
+    border-color: #1d4ed8 !important;
+}
